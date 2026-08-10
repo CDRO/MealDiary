@@ -120,6 +120,15 @@ class MealViewModel(
         }.sortedByDescending { it.date }
     }.asLiveData()
 
+    val weeklySummary: LiveData<DailySummary> = dailySummaries.map { summaries ->
+        val last7Days = summaries.take(7)
+        DailySummary(
+            date = LocalDate.now(), // Represents current week context
+            mealCount = last7Days.sumOf { it.mealCount },
+            bmCount = last7Days.sumOf { it.bmCount }
+        )
+    }
+
     val todayTimeline: LiveData<List<FeedItem>> = unifiedFeed.asFlow().map { items ->
         val today = LocalDate.now()
         items.filter { item ->

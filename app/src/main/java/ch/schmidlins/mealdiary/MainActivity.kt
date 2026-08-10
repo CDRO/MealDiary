@@ -247,6 +247,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
 fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
     val summaries by viewModel.dailySummaries.observeAsState(emptyList())
     val todayItems by viewModel.todayTimeline.observeAsState(emptyList())
+    val weeklySummary by viewModel.weeklySummary.observeAsState()
 
     Scaffold(
         topBar = {
@@ -261,6 +262,26 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
+            item {
+                weeklySummary?.let {
+                    Text("Weekly Summary (Last 7 Days)", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                                Text("Total Meals", style = MaterialTheme.typography.labelMedium)
+                                Text("${it.mealCount}", style = MaterialTheme.typography.headlineMedium)
+                            }
+                            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                                Text("Total BMs", style = MaterialTheme.typography.labelMedium)
+                                Text("${it.bmCount}", style = MaterialTheme.typography.headlineMedium)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
+
             item {
                 Text("Today's Timeline", style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.height(8.dp))
