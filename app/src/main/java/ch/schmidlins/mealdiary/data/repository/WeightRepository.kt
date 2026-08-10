@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 class WeightRepository(private val weightEntryDao: WeightEntryDao) {
     val allWeightEntries: Flow<List<WeightEntry>> = weightEntryDao.getAllWeightEntriesFlow()
+    val lastWeightEntry: Flow<WeightEntry?> = weightEntryDao.getLastWeightEntryFlow()
 
     suspend fun insertWeight(entry: WeightEntry) {
         weightEntryDao.insertWeight(entry)
