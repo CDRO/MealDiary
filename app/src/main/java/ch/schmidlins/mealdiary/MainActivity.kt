@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -242,10 +243,13 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
+    val summaries by viewModel.dailySummaries.observeAsState(emptyList())
+    val todayItems by viewModel.todayTimeline.observeAsState(emptyList())
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Daily Overview") },
+                title = { Text("Overview") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -254,12 +258,53 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-            Text("Activity Timeline", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-            Card(modifier = Modifier.fillMaxWidth().height(200.dp)) {
-                Box(contentAlignment = androidx.compose.ui.Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    Text("Visual Timeline Placeholder")
+        LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
+            item {
+                Text("Today's Timeline", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                TimelineComponent(todayItems)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+            
+            item {
+                Text("Daily History", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            items(summaries) { summary ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    ListItem(
+                        headlineContent = { Text(summary.date.toString()) },
+                        supportingContent = { Text("Meals: ${summary.mealCount}, BMs: ${summary.bmCount}") },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TimelineComponent(items: List<FeedItem>) {
+    Card(modifier = Modifier.fillMaxWidth().height(80.dp)) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            if (items.isEmpty()) {
+                Text("No activities today", style = MaterialTheme.typography.bodyMedium)
+            } else {
+                items.sortedBy { it.timestamp }.forEach { item ->
+                    val color = if (item is FeedItem.MealItem) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                    val icon = if (item is FeedItem.MealItem) "🍴" else "💩"
+                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                        Text(icon)
+                        Box(modifier = Modifier.size(8.dp).background(color, androidx.compose.foundation.shape.CircleShape))
+                    }
                 }
             }
         }
