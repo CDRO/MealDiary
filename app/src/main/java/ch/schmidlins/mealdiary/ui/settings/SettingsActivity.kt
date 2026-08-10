@@ -28,6 +28,7 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository) {
     val scope = rememberCoroutineScope()
     val bmInterval by prefsRepo.bmPromptIntervalHours.collectAsState(initial = 24)
     val reminderEnabled by prefsRepo.isReminderEnabled.collectAsState(initial = true)
+    val weightEnabled by prefsRepo.isWeightTrackingEnabled.collectAsState(initial = false)
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Settings") }) }
@@ -49,6 +50,16 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository) {
                 Switch(
                     checked = reminderEnabled,
                     onCheckedChange = { scope.launch { prefsRepo.updateReminderEnabled(it) } }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Enable Weight Tracking")
+                Switch(
+                    checked = weightEnabled,
+                    onCheckedChange = { scope.launch { prefsRepo.updateWeightTrackingEnabled(it) } }
                 )
             }
         }

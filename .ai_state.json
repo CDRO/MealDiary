@@ -11,8 +11,8 @@
   "current_state": {
     "active_milestone_file": "docs/artifacts/milestones/m4_weight_tracker/implementation_plan.md",
     "current_step": "Review & Repair Loop",
-    "loop_iteration": 3,
-    "last_action_completed": "Implemented weight entry and suggestion logic in ViewModel",
-    "next_immediate_action": "Add weight suggestion card and logging UI to MainActivity"
+    "loop_iteration": 4,
+    "last_action_completed": "Added weight suggestion card and logging UI to MainActivity",
+    "next_immediate_action": "Update SettingsActivity with weight tracking toggle"
   }
 }
