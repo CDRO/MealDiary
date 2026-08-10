@@ -2,6 +2,8 @@ package ch.schmidlins.mealdiary.ui
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
+import ch.schmidlins.mealdiary.data.entities.BowelMovement
+import ch.schmidlins.mealdiary.data.entities.Meal
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
@@ -16,6 +18,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MealViewModelTest {
@@ -31,6 +35,8 @@ class MealViewModelTest {
     private lateinit var userPreferencesRepository: UserPreferencesRepository
     private lateinit var viewModel: MealViewModel
 
+    private val mealsFlow = MutableStateFlow<List<Meal>>(emptyList())
+    private val bmsFlow = MutableStateFlow<List<BowelMovement>>(emptyList())
     private val firstMealTimestampFlow = MutableStateFlow<Long?>(null)
     private val lastBMTimestampFlow = MutableStateFlow<Long?>(null)
     private val bmIntervalFlow = MutableStateFlow(24)
@@ -45,8 +51,8 @@ class MealViewModelTest {
         weightRepository = mockk(relaxed = true)
         userPreferencesRepository = mockk(relaxed = true)
 
-        every { mealRepository.allMeals } returns flowOf(emptyList())
-        every { bmRepository.allBMs } returns flowOf(emptyList())
+        every { mealRepository.allMeals } returns mealsFlow
+        every { bmRepository.allBMs } returns bmsFlow
         every { weightRepository.allWeightEntries } returns flowOf(emptyList())
         every { mealRepository.firstMealTimestamp } returns firstMealTimestampFlow
         every { bmRepository.lastBMTimestamp } returns lastBMTimestampFlow
@@ -60,6 +66,58 @@ class MealViewModelTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `dailySummaries correctly groups items by date`() {
+        val today = LocalDate.now()
+        val yesterday = today.minusDays(1)
+        val todayMillis = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val yesterdayMillis = yesterday.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        mealsFlow.value = listOf(
+            Meal(1, todayMillis + 1000, "Breakfast"),
+            Meal(2, todayMillis + 2000, "Lunch"),
+            Meal(3, yesterdayMillis + 1000, "Dinner")
+        )
+        bmsFlow.value = listOf(
+            BowelMovement(1, todayMillis + 3000),
+            BowelMovement(2, yesterdayMillis + 2000)
+        )
+
+        val observer = mockk<Observer<List<DailySummary>>>(relaxed = true)
+        viewModel.dailySummaries.observeForever(observer)
+
+        val expected = listOf(
+            DailySummary(today, 2, 1),
+            DailySummary(yesterday, 1, 1)
+        )
+        verify { observer.onChanged(expected) }
+    }
+
+    @Test
+    fun `todayTimeline only contains items from today`() {
+        val today = LocalDate.now()
+        val yesterday = today.minusDays(1)
+        val todayMillis = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val yesterdayMillis = yesterday.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        mealsFlow.value = listOf(
+            Meal(1, todayMillis + 1000, "Today's Meal"),
+            Meal(2, yesterdayMillis + 1000, "Yesterday's Meal")
+        )
+
+        val observer = mockk<Observer<List<FeedItem>>>(relaxed = true)
+        viewModel.todayTimeline.observeForever(observer)
+
+        val captured = mutableListOf<List<FeedItem>>()
+        verify { observer.onChanged(capture(captured)) }
+        
+        val todayItems = captured.last()
+        assert(todayItems.all { 
+            java.time.Instant.ofEpochMilli(it.timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDate() == today 
+        })
+        assert(todayItems.size == 1)
     }
 
     @Test
