@@ -14,6 +14,10 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.*
 import androidx.glance.text.Text
 
+import ch.schmidlins.mealdiary.data.AppDatabase
+import ch.schmidlins.mealdiary.data.entities.BowelMovement
+import ch.schmidlins.mealdiary.data.entities.Meal
+
 class MealDiaryWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
@@ -41,6 +45,18 @@ private val ActionTypeKey = ActionParameters.Key<String>("type")
 
 class LogAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        // Will implement actual logging in the next loop
+        val type = parameters[ActionTypeKey] ?: return
+        val database = AppDatabase.getDatabase(context)
+        
+        when (type) {
+            "MEAL" -> {
+                database.mealDao().insertMeal(Meal(description = "Logged from Widget", timestamp = System.currentTimeMillis()))
+            }
+            "BM" -> {
+                database.bowelMovementDao().insertBM(BowelMovement(timestamp = System.currentTimeMillis()))
+            }
+        }
+        
+        MealDiaryWidget().update(context, glanceId)
     }
 }
