@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -106,14 +108,28 @@ fun MealDiaryApp(viewModel: MealViewModel) {
                             ListItem(
                                 headlineContent = { Text(item.meal.description) },
                                 leadingContent = { Text("🍴") },
-                                trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                                trailingContent = {
+                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
+                                        IconButton(onClick = { viewModel.deleteMeal(item.meal) }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
                             )
                         }
                         is FeedItem.BMItem -> {
                             ListItem(
                                 headlineContent = { Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) },
                                 leadingContent = { Text("💩") },
-                                trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                                trailingContent = {
+                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
+                                        IconButton(onClick = { viewModel.deleteBM(item.bm) }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
                             )
                         }
                     }

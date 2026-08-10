@@ -99,6 +99,18 @@ class MealViewModel(
             bmRepository.insertBM(bm)
         }
     }
+
+    fun deleteMeal(meal: Meal) {
+        viewModelScope.launch {
+            mealRepository.deleteMeal(meal)
+        }
+    }
+
+    fun deleteBM(bm: BowelMovement) {
+        viewModelScope.launch {
+            bmRepository.deleteBM(bm)
+        }
+    }
 }
 
 class MealViewModelFactory(
