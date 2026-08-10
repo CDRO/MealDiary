@@ -304,7 +304,7 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
                 ) {
                     ListItem(
                         headlineContent = { Text(summary.date.toString()) },
-                        supportingContent = { Text("Meals: ${summary.mealCount}, BMs: ${summary.bmCount}") },
+                        supportingContent = { Text("🍴 ${summary.mealCount} Meals, 💩 ${summary.bmCount} BMs") },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
                     )
                 }
