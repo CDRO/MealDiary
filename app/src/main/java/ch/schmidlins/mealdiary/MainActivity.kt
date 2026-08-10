@@ -8,15 +8,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import ch.schmidlins.mealdiary.data.AppDatabase
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
@@ -40,15 +44,24 @@ class MainActivity : ComponentActivity() {
         val viewModelFactory = MealViewModelFactory(mealRepository, bmRepository, weightRepository, prefsRepo)
 
         setContent {
+            val navController = rememberNavController()
             val viewModel: MealViewModel = viewModel(factory = viewModelFactory)
-            MealDiaryApp(viewModel)
+            
+            NavHost(navController = navController, startDestination = "main") {
+                composable("main") {
+                    MealDiaryApp(viewModel, onNavigateToOverview = { navController.navigate("overview") })
+                }
+                composable("overview") {
+                    DataOverviewScreen(viewModel, onBack = { navController.popBackStack() })
+                }
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MealDiaryApp(viewModel: MealViewModel) {
+fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var mealText by remember { mutableStateOf("") }
     var weightText by remember { mutableStateOf("") }
@@ -66,6 +79,9 @@ fun MealDiaryApp(viewModel: MealViewModel) {
             TopAppBar(
                 title = { Text("MealDiary - $patternResult") },
                 actions = {
+                    IconButton(onClick = onNavigateToOverview) {
+                        Icon(Icons.Default.Info, contentDescription = "Overview")
+                    }
                     IconButton(onClick = { 
                         val intent = Intent(context, ch.schmidlins.mealdiary.ui.settings.SettingsActivity::class.java)
                         context.startActivity(intent)
@@ -217,6 +233,33 @@ fun MealDiaryApp(viewModel: MealViewModel) {
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Daily Overview") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding).padding(16.dp)) {
+            Text("Activity Timeline", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(modifier = Modifier.fillMaxWidth().height(200.dp)) {
+                Box(contentAlignment = androidx.compose.ui.Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Text("Visual Timeline Placeholder")
                 }
             }
         }
