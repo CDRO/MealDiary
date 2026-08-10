@@ -119,25 +119,33 @@ fun MealDiaryApp(viewModel: MealViewModel) {
             }
 
             if (isWeightTrackingEnabled) {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = weightText,
-                        onValueChange = { weightText = it },
-                        label = { Text("Weight (kg)") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        weightText.toDoubleOrNull()?.let {
-                            viewModel.addWeightEntry(it)
-                            weightText = ""
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = weightText,
+                            onValueChange = { weightText = it },
+                            label = { Text("Weight (kg)") },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(onClick = {
+                            weightText.toDoubleOrNull()?.let {
+                                viewModel.addWeightEntry(it)
+                                weightText = ""
+                            }
+                        }) {
+                            Text("Log")
                         }
-                    }) {
-                        Text("Log")
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
 
             OutlinedTextField(
