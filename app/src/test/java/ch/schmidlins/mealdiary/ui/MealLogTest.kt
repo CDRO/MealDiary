@@ -7,7 +7,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ch.schmidlins.mealdiary.DataOverviewScreen
 import ch.schmidlins.mealdiary.MealDiaryApp
-import ch.schmidlins.mealdiary.data.entities.Meal
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
@@ -18,7 +17,12 @@ import kotlinx.coroutines.flow.flowOf
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class MealLogTest {
 
     @get:Rule
@@ -116,7 +120,7 @@ class MealLogTest {
             }
         }
 
-        // Click Overview icon (represented by Info icon)
+        // Click Overview icon
         composeTestRule.onNodeWithContentDescription("Overview").performClick()
 
         // Verify Overview screen is shown

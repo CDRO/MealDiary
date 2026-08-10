@@ -1,34 +1,36 @@
-# Walkthrough - Milestone 4: Weight Tracker & Suggestion Engine
+# Walkthrough - Milestone 5: Data Overview
 
-Milestone 4 introduced weight tracking and a smart suggestion logic to encourage more complete diary keeping without increasing the initial hurdle for new users.
+Milestone 5 introduced a comprehensive overview of the user's data, providing high-level summaries and a visual timeline of activities.
 
 ## Changes Made
 
-### 1. Smart Suggestion Engine
-- **7-Day Threshold**: Implemented logic to suggest weight tracking exactly 7 days after the first meal entry.
-- **Interactive Card**: A non-intrusive card appears in the feed with "Yes, Enable" and "Not now" options.
-- **Dismissal Persistence**: Suggestion dismissal is persisted in DataStore to avoid repeated annoyance.
+### 1. Navigation Integration
+- Integrated **Jetpack Navigation Compose**.
+- Implemented navigation between the **Main Diary Feed** and the new **Data Overview** screen.
+- Added an "Overview" icon to the main top bar for quick access.
 
-### 2. Weight Tracking Integration
-- **Unified Feed**: Weight entries (⚖️) are now part of the chronological feed.
-- **Multi-entry Support**: Each weight entry is timestamped, allowing for multiple logs per day.
-- **Zero-Hurdle Input**: Added a streamlined numeric input card for weight that only appears when the feature is enabled.
+### 2. Data Overview Screen
+- Created a new **Overview Screen** that provides:
+    - **Weekly Summary**: Total counts of meals and bowel movements for the last 7 days.
+    - **Daily History**: A descending list of days with icons (🍴/💩) showing the activity counts for each date.
+    - **Empty State Handling**: Clear messaging when no historical data is available.
 
-### 3. Settings & Preferences
-- **Toggle Control**: Added a "Enable Weight Tracking" toggle in the Settings screen.
-- **Persistence**: Full integration with `UserPreferencesRepository` using Jetpack DataStore.
+### 3. Visual Timeline
+- Implemented a **Timeline Component** that visualizes today's activities.
+- Uses relative positioning on a 24-hour horizontal bar to show exactly when meals and bowel movements occurred during the day.
 
-### 4. Testing & Verification
-- **Unit Tests**: Expanded `MealViewModelTest` to cover 100% of the suggestion and enabled-state logic (13 unit tests passing).
-- **Instrumented Tests**: Added `testWeightSuggestionVisibility` and `testWeightLoggingFlow` to `MealLogTest` (5 instrumented tests passing on device).
-- **Manual Verification**: Verified UI flow on emulator, including settings toggle and feed integration.
+### 4. Logic & Testing
+- Updated `MealViewModel` to handle data grouping by date using `java.time` APIs.
+- Added comprehensive **Unit Tests** for date grouping and timeline filtering (15 total unit tests passing).
+- Added **Instrumented Interaction Tests** for navigation and overview display (6 total instrumented tests passing).
 
 ## How to Verify
-1.  **Fresh Usage**: No weight UI is visible initially.
-2.  **Enable Feature**: Go to **Settings** -> Toggle **Enable Weight Tracking**.
-3.  **Log Weight**: Return to the main screen, enter a weight (e.g., 75.5) in the new card, and tap **Log**.
-4.  **History**: Observe the entry in the feed with a ⚖️ icon.
-5.  **Suggestion (Simulated)**: The suggestion card will appear if the first meal was logged > 7 days ago and the feature is still disabled.
+1.  Launch the app.
+2.  Log some meals and bowel movements for today.
+3.  Tap the "Info" (Overview) icon in the top bar.
+4.  Observe the "Today's Timeline" with icons correctly positioned.
+5.  Observe the "Weekly Summary" and "Daily History" list items.
+6.  Tap the back arrow to return to the main feed.
 
 ## Next Steps
-In Milestone 5, we will implement the **Heuristic Analysis Engine** in C++ to start identifying food patterns (accelerators/decelerators).
+In Milestone 6, we will introduce **Advanced Statistics**, including BM frequency distributions and weight trend charts.
