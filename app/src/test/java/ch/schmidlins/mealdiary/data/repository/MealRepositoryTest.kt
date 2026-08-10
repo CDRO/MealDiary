@@ -49,4 +49,14 @@ class MealRepositoryTest {
 
         coVerify { mealDao.insertMeal(meal) }
     }
+
+    @Test
+    fun `deleteMeal calls dao delete`() = runTest {
+        val meal = Meal(1, 1000, "Pizza")
+        coEvery { mealDao.deleteMeal(meal) } returns Unit
+
+        repository.deleteMeal(meal)
+
+        coVerify { mealDao.deleteMeal(meal) }
+    }
 }
