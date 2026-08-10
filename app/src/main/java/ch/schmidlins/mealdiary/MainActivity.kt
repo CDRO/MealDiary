@@ -4,19 +4,24 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import ch.schmidlins.mealdiary.data.AppDatabase
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
@@ -26,6 +31,8 @@ import ch.schmidlins.mealdiary.ui.FeedItem
 import ch.schmidlins.mealdiary.ui.MealViewModel
 import ch.schmidlins.mealdiary.ui.MealViewModelFactory
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.*
 
 class MainActivity : ComponentActivity() {
@@ -40,15 +47,24 @@ class MainActivity : ComponentActivity() {
         val viewModelFactory = MealViewModelFactory(mealRepository, bmRepository, weightRepository, prefsRepo)
 
         setContent {
+            val navController = rememberNavController()
             val viewModel: MealViewModel = viewModel(factory = viewModelFactory)
-            MealDiaryApp(viewModel)
+            
+            NavHost(navController = navController, startDestination = "main") {
+                composable("main") {
+                    MealDiaryApp(viewModel, onNavigateToOverview = { navController.navigate("overview") })
+                }
+                composable("overview") {
+                    DataOverviewScreen(viewModel, onBack = { navController.popBackStack() })
+                }
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MealDiaryApp(viewModel: MealViewModel) {
+fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var mealText by remember { mutableStateOf("") }
     var weightText by remember { mutableStateOf("") }
@@ -66,6 +82,9 @@ fun MealDiaryApp(viewModel: MealViewModel) {
             TopAppBar(
                 title = { Text("MealDiary - $patternResult") },
                 actions = {
+                    IconButton(onClick = onNavigateToOverview) {
+                        Icon(Icons.Default.Info, contentDescription = "Overview")
+                    }
                     IconButton(onClick = { 
                         val intent = Intent(context, ch.schmidlins.mealdiary.ui.settings.SettingsActivity::class.java)
                         context.startActivity(intent)
@@ -215,6 +234,119 @@ fun MealDiaryApp(viewModel: MealViewModel) {
                                     }
                                 }
                             )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
+    val summaries by viewModel.dailySummaries.observeAsState(emptyList())
+    val todayItems by viewModel.todayTimeline.observeAsState(emptyList())
+    val weeklySummary by viewModel.weeklySummary.observeAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Overview") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
+            item {
+                weeklySummary?.let {
+                    Text("Weekly Summary (Last 7 Days)", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                                Text("Total Meals", style = MaterialTheme.typography.labelMedium)
+                                Text("${it.mealCount}", style = MaterialTheme.typography.headlineMedium)
+                            }
+                            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                                Text("Total BMs", style = MaterialTheme.typography.labelMedium)
+                                Text("${it.bmCount}", style = MaterialTheme.typography.headlineMedium)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
+
+            item {
+                Text("Today's Timeline", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                TimelineComponent(todayItems)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+            
+            item {
+                Text("Daily History", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                if (summaries.isEmpty()) {
+                    Text("No historical data available", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
+                }
+            }
+
+            items(summaries) { summary ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    ListItem(
+                        headlineContent = { Text(summary.date.toString()) },
+                        supportingContent = { Text("🍴 ${summary.mealCount} Meals, 💩 ${summary.bmCount} BMs") },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TimelineComponent(items: List<FeedItem>) {
+    val today = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val dayMillis = 24 * 60 * 60 * 1000L
+
+    Card(modifier = Modifier.fillMaxWidth().height(100.dp)) {
+        Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            // Baseline
+            Box(modifier = Modifier.fillMaxWidth().height(2.dp).background(MaterialTheme.colorScheme.outlineVariant).align(androidx.compose.ui.Alignment.Center))
+            
+            if (items.isEmpty()) {
+                Text("No activities today", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
+            } else {
+                items.forEach { item ->
+                    val offset = ((item.timestamp - today).toFloat() / dayMillis).coerceIn(0f, 1f)
+                    val color = if (item is FeedItem.MealItem) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                    val icon = if (item is FeedItem.MealItem) "🍴" else "💩"
+                    
+                    Column(
+                        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                        modifier = Modifier.align(androidx.compose.ui.Alignment.CenterStart).fillMaxWidth(offset)
+                    ) {
+                        // This is a simple way to position items along the width. 
+                        // For better precision, use a Canvas or Box with offset.
+                    }
+                    
+                    // Improved positioning using Box with padding/bias or custom layout
+                    Box(modifier = Modifier.fillMaxWidth().align(androidx.compose.ui.Alignment.Center)) {
+                        Column(
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                            modifier = Modifier.align(androidx.compose.ui.BiasAlignment(horizontalBias = (offset * 2) - 1, verticalBias = 0f))
+                        ) {
+                            Text(icon, style = MaterialTheme.typography.bodySmall)
+                            Box(modifier = Modifier.size(6.dp).background(color, androidx.compose.foundation.shape.CircleShape))
                         }
                     }
                 }

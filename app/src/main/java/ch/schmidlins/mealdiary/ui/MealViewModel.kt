@@ -13,6 +13,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+
+data class DailySummary(
+    val date: LocalDate,
+    val mealCount: Int,
+    val bmCount: Int
+)
 
 sealed class FeedItem {
     abstract val id: Long
@@ -86,6 +95,45 @@ class MealViewModel(
         items.addAll(weights.map { FeedItem.WeightItem(it) })
         items.sortByDescending { it.timestamp }
         items
+    }.asLiveData()
+
+    val dailySummaries: LiveData<List<DailySummary>> = combine(
+        mealRepository.allMeals,
+        bmRepository.allBMs
+    ) { meals, bms ->
+        val summaries = mutableMapOf<LocalDate, Pair<Int, Int>>()
+        
+        meals.forEach { meal ->
+            val date = Instant.ofEpochMilli(meal.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+            val current = summaries.getOrDefault(date, Pair(0, 0))
+            summaries[date] = current.copy(first = current.first + 1)
+        }
+        
+        bms.forEach { bm ->
+            val date = Instant.ofEpochMilli(bm.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+            val current = summaries.getOrDefault(date, Pair(0, 0))
+            summaries[date] = current.copy(second = current.second + 1)
+        }
+        
+        summaries.entries.map { (date, counts) ->
+            DailySummary(date, counts.first, counts.second)
+        }.sortedByDescending { it.date }
+    }.asLiveData()
+
+    val weeklySummary: LiveData<DailySummary> = dailySummaries.map { summaries ->
+        val last7Days = summaries.take(7)
+        DailySummary(
+            date = LocalDate.now(), // Represents current week context
+            mealCount = last7Days.sumOf { it.mealCount },
+            bmCount = last7Days.sumOf { it.bmCount }
+        )
+    }
+
+    val todayTimeline: LiveData<List<FeedItem>> = unifiedFeed.asFlow().map { items ->
+        val today = LocalDate.now()
+        items.filter { item ->
+            Instant.ofEpochMilli(item.timestamp).atZone(ZoneId.systemDefault()).toLocalDate() == today
+        }
     }.asLiveData()
 
     val shouldAskAboutBM: LiveData<Boolean> = combine(
