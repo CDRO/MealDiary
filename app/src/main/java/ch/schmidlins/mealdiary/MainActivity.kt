@@ -292,6 +292,9 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
             item {
                 Text("Daily History", style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.height(8.dp))
+                if (summaries.isEmpty()) {
+                    Text("No historical data available", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
+                }
             }
 
             items(summaries) { summary ->
