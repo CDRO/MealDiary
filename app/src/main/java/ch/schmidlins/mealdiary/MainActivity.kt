@@ -40,9 +40,11 @@ class MainActivity : ComponentActivity() {
 fun MealDiaryApp(viewModel: MealViewModel) {
     var mealText by remember { mutableStateOf("") }
     val meals by viewModel.meals.observeAsState(emptyList())
+    val analysisEngine = remember { AnalysisEngine() }
+    val patternResult = remember { analysisEngine.getPatternResult() }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("MealDiary") }) }
+        topBar = { TopAppBar(title = { Text("MealDiary - $patternResult") }) }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
             OutlinedTextField(
