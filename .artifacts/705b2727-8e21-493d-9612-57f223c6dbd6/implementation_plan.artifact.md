@@ -1,44 +1,52 @@
-# Implementation Plan - Master Plan Expansion (Overview & Stats)
+# Implementation Plan - Test Optimization & Milestone 6: Advanced Statistics
 
-This plan outlines the addition of "Overview" and "Stats" milestones to the MealDiary Master Plan.
+This plan aims to significantly speed up the test suite and implement quantitative data insights.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> I am proposing to insert "Overview" and "Stats" before the "Heuristic Analysis" milestone to provide a visual foundation for the data before deep analysis.
-
-## Proposed Master Plan Updates
-
-### [NEW] Milestone 5: Data Overview
-- **Objective**: Provide a high-level view of daily and weekly activity.
-- **Tasks**:
-    - Implement a "Calendar" or "Daily Summary" view.
-    - Visualize meal frequency and BM timing on a timeline.
-    - Add navigation between the main feed and the overview screen.
-
-### [NEW] Milestone 6: Advanced Statistics
-- **Objective**: Extract quantitative insights from the logged data.
-- **Tasks**:
-    - Implement stats for:
-        - Average BM frequency.
-        - Weight trends (if enabled).
-        - Most logged food items.
-    - Create charts and graphs for weight and frequency over time.
-
-### [SHIFTED] Milestone 7: Heuristic Analysis (C++ Native)
-- Moved to accommodate the new milestones. Focuses on correlating food keywords with BM timing.
-
-### [SHIFTED] Milestone 8: Final Polish
-- Moved to the end of the roadmap.
+> **Test Speed**: I am proposing to migrate instrumented UI tests (on-device) to JVM-based tests using **Robolectric**. This will allow interaction tests to run on the host machine, reducing execution time from minutes to seconds.
+> **Visual Statistics**: We will add a "Statistics" section to the Overview screen featuring charts for weight trends and frequency analysis.
 
 ## Proposed Changes
 
-### Documentation
+### 1. Test Optimization
 
-#### [MODIFY] [MASTER_PLAN.md](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/docs/artifacts/MASTER_PLAN.md)
-- Update with the new milestone sequence.
+#### [MODIFY] [libs.versions.toml](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/gradle/libs.versions.toml)
+- Add `robolectric` version and library.
+
+#### [MODIFY] [app/build.gradle.kts](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/build.gradle.kts)
+- Add `testImplementation(libs.robolectric)`.
+- Enable `includeAndroidResources = true` in `testOptions`.
+
+#### [MOVE] [MealLogTest.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/androidTest/java/ch/schmidlins/mealdiary/ui/MealLogTest.kt) to `app/src/test/java/ch/schmidlins/mealdiary/ui/MealLogTest.kt`
+- Update to run with `@RunWith(RobolectricTestRunner::class)`.
+- This converts the on-device interaction test into a high-speed JVM test.
+
+---
+
+### 2. Milestone 6: Advanced Statistics
+
+#### Data Layer
+- **[MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)**:
+    - Implement logic to calculate:
+        - Average BM frequency (BMs per day over last 7/30 days).
+        - Weight delta (difference between latest and first entry).
+        - Top 5 most frequent meal descriptions.
+
+#### UI Layer
+- **[MODIFY] [MainActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/MainActivity.kt)**:
+    - Add a "Statistics" tab or section to `DataOverviewScreen`.
+    - Implement a **Weight Trend Chart** using Compose `Canvas`.
+    - Implement a **BM Distribution** bar chart.
 
 ## Verification Plan
 
+### Automated Tests
+- **JVM UI Tests**: Run the migrated `MealLogTest` on the host machine.
+- **Unit Tests**: Verify the math behind BM frequency and weight trends in `MealViewModelTest`.
+
 ### Manual Verification
-- Review the updated `MASTER_PLAN.md` to ensure it reflects the desired roadmap.
+- Deploy to emulator.
+- Navigate to Overview and verify that the new charts represent the logged data accurately.
+- Verify that tests now run significantly faster via `.\gradlew.bat test`.
