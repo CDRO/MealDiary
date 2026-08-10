@@ -51,8 +51,11 @@ class MainActivity : ComponentActivity() {
 fun MealDiaryApp(viewModel: MealViewModel) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var mealText by remember { mutableStateOf("") }
+    var weightText by remember { mutableStateOf("") }
     val feedItems by viewModel.unifiedFeed.observeAsState(emptyList())
     val shouldAskBM by viewModel.shouldAskAboutBM.observeAsState(false)
+    val shouldShowWeightSuggestion by viewModel.shouldShowWeightSuggestion.observeAsState(false)
+    val isWeightTrackingEnabled by viewModel.isWeightTrackingEnabled.observeAsState(false)
     val timeSinceBM by viewModel.timeSinceLastBM.observeAsState(null)
     val analysisEngine = remember { AnalysisEngine() }
     val patternResult = remember { analysisEngine.getPatternResult() }
@@ -93,6 +96,48 @@ fun MealDiaryApp(viewModel: MealViewModel) {
                         }
                     }
                 }
+            }
+
+            if (shouldShowWeightSuggestion) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("You've been using MealDiary for a week! Would you like to track your weight as well?", style = MaterialTheme.typography.bodyLarge)
+                        Row(modifier = Modifier.padding(top = 8.dp)) {
+                            Button(onClick = { viewModel.enableWeightTracking() }) {
+                                Text("Yes, Enable")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            TextButton(onClick = { viewModel.dismissWeightSuggestion() }) {
+                                Text("Not now")
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (isWeightTrackingEnabled) {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = weightText,
+                        onValueChange = { weightText = it },
+                        label = { Text("Weight (kg)") },
+                        modifier = Modifier.weight(1f),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(onClick = {
+                        weightText.toDoubleOrNull()?.let {
+                            viewModel.addWeightEntry(it)
+                            weightText = ""
+                        }
+                    }) {
+                        Text("Log")
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             OutlinedTextField(
