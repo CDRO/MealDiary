@@ -14,4 +14,7 @@ interface BowelMovementDao {
 
     @Delete
     suspend fun deleteBM(bm: BowelMovement)
+
+    @Query("SELECT MAX(timestamp) FROM bowel_movements")
+    fun getLastBMTimestampFlow(): Flow<Long?>
 }

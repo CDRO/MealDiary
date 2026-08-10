@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 class BMRepository(private val bmDao: BowelMovementDao) {
     val allBMs: Flow<List<BowelMovement>> = bmDao.getAllBMsFlow()
+    val lastBMTimestamp: Flow<Long?> = bmDao.getLastBMTimestampFlow()
 
     suspend fun insertBM(bm: BowelMovement) {
         bmDao.insertBM(bm)
