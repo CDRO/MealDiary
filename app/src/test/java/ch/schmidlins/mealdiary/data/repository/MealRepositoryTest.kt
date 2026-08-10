@@ -21,6 +21,7 @@ class MealRepositoryTest {
     fun setup() {
         mealDao = mockk()
         every { mealDao.getAllMealsFlow() } returns flowOf(emptyList())
+        every { mealDao.getFirstMealTimestampFlow() } returns flowOf(null)
         repository = MealRepository(mealDao)
     }
 
@@ -29,6 +30,7 @@ class MealRepositoryTest {
         val meals = listOf(Meal(1, 1000, "Pizza"))
         val mockDao = mockk<MealDao>()
         every { mockDao.getAllMealsFlow() } returns flowOf(meals)
+        every { mockDao.getFirstMealTimestampFlow() } returns flowOf(null)
         val repo = MealRepository(mockDao)
 
         val result = repo.allMeals
@@ -46,5 +48,15 @@ class MealRepositoryTest {
         repository.insertMeal(meal)
 
         coVerify { mealDao.insertMeal(meal) }
+    }
+
+    @Test
+    fun `deleteMeal calls dao delete`() = runTest {
+        val meal = Meal(1, 1000, "Pizza")
+        coEvery { mealDao.deleteMeal(meal) } returns Unit
+
+        repository.deleteMeal(meal)
+
+        coVerify { mealDao.deleteMeal(meal) }
     }
 }

@@ -14,4 +14,7 @@ interface MealDao {
 
     @Delete
     suspend fun deleteMeal(meal: Meal)
+
+    @Query("SELECT MIN(timestamp) FROM meals")
+    fun getFirstMealTimestampFlow(): Flow<Long?>
 }

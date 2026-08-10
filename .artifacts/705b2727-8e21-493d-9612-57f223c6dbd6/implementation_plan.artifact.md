@@ -1,66 +1,56 @@
-# Implementation Plan - MealDiary Roadmap
+# Implementation Plan - Milestone 2: History & Suppression Logic
 
-This plan outlines the steps to define the project features and establish the initial codebase following the strict workflow in `.geminirules`.
+This plan focuses on implementing a unified history feed and the smart suppression/prompt logic for bowel movement tracking.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> The scope has significantly increased. Key highlights:
-> 1. **Heuristic Analysis Engine**: A native C++ core will be planned for correlating food keywords with Bowel Movement (BM) timing to identify "accelerators" and "decelerators".
-> 2. **Home Screen Widgets**: Quick-action buttons for logging to minimize hurdles further.
-> 3. **Smart Weight Tracker**: Hidden by default, suggested after 7 days, supports multi-entry.
-> 4. **Flexible Reminders**: Users map specific meals (e.g., "Breakfast") to specific times.
+> **BM Prompt Logic**: After the initial 24h suppression period (from the first meal), the app will actively ask "Have you had a bowel movement?" if none have been logged in the last 24 hours.
 
-## Proposed Features
+> [!TIP]
+> **Configurability**: While Milestone 2 focuses on the hardcoded 24h interval, Milestone 3 will introduce settings to adjust this interval (12h - 48h or disabled).
 
-- **Instant Logging**: One-tap entry via App and Widgets.
-- **Smart Tracking & Logic**:
-    - **BM Tracker**: Visible only after 24h of use.
-    - **Heuristic Engine**: Analyzes meal text vs. BM timing. C++ implementation for scalability/performance.
-- **Configurable Reminders**:
-    - Per-meal time configuration (Breakfast, Lunch, Dinner, Snacks).
-    - `WorkManager` for reliable background scheduling.
-- **Weight Tracking**:
-    - Multi-entry per day (timestamped).
-    - Opt-in/Suggestion logic (1-week delay for suggestion).
-- **Local Persistence**: Room DB for all entries.
+## Proposed Changes
 
-## Proposed Roadmap (Milestones)
+### Data Layer
 
-### Milestone 1: Core Infrastructure
-- Project setup with Jetpack Compose, Room, and **Native C++ (CMake)** support.
-- Data models for `Meal`, `BowelMovement`, and `WeightEntry`.
-- Basic "Zero Hurdle" UI.
+#### [MODIFY] [MealDao.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/dao/MealDao.kt)
+- Add a query to fetch the timestamp of the earliest meal entry.
 
-### Milestone 2: History & Suppression Logic
-- Feed showing all entry types.
-- 24-hour suppression for BM tracking.
-- Initial Room migrations/schemas for performance analysis.
+#### [MODIFY] [BowelMovementDao.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/dao/BowelMovementDao.kt)
+- Add a query to fetch the timestamp of the most recent BM entry.
 
-### Milestone 3: Reminders & Widgets
-- **Widgets**: Implementation of `Glance` or `RemoteViews` for quick logging.
-- **Reminders**: Configurable meal-time mapping UI and `WorkManager` integration.
+### View Model
 
-### Milestone 4: Weight Tracker & Suggestion Engine
-- Weight entry UI and history.
-- "1-week usage" logic to trigger the weight tracker suggestion.
+#### [MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)
+- Implement a `unifiedFeed` Flow that combines Meals and Bowel Movements.
+- Implement logic for `shouldAskAboutBM`:
+    - `false` if first meal was < 24h ago.
+    - `true` if first meal was > 24h ago AND last BM was > 24h ago (or doesn't exist).
+- Expose `timeSinceLastBM` state.
 
-### Milestone 5: Heuristic Analysis (C++ Native)
-- Implementation of the correlation engine in C++.
-- UI for showing "Food Patterns" (e.g., "Coffee usually precedes a BM within 30 mins").
+### UI Layer
 
-### Milestone 6: UX Polishing & Robustness
-- Haptic feedback, animations, and full test suite execution.
+#### [MODIFY] [MainActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/MainActivity.kt)
+- Add a "BM Prompt" section (e.g., a card or banner) that appears when `shouldAskAboutBM` is true.
+- Refactor the feed to use a unified list with chronological sorting.
 
 ## Verification Plan
 
 ### Automated Tests
-- **Unit Tests**: JVM-based tests for all business logic, suppression timers, and suggestion triggers.
-- **Interaction Tests**: Instrumented or Robolectric tests for all UI flows and Widget interactions.
-- **C++ Tests**: Native unit tests for the heuristic analysis engine.
-- **Performance**: Monitor and optimize test execution time; ensure the suite remains lean and fast.
+- **Unit Tests**:
+    - Verify `shouldAskAboutBM` is `false` if first meal is < 24h old.
+    - Verify `shouldAskAboutBM` is `true` if first meal is > 24h old and no BM exists.
+    - Verify `shouldAskAboutBM` becomes `false` immediately after a BM is logged.
+- **Interaction Tests**:
+    - Verify the BM Prompt UI is not present in the "suppression" phase.
+    - Verify the unified feed order.
 
 ### Manual Verification
-- Test widget logging from the home screen.
-- Verify weight suggestion appears exactly after 7 days of first log.
-- Verify analysis results match expected patterns from dummy data.
+- Deploy to emulator.
+- Log a meal. Verify no BM prompt appears.
+- Log a BM. Verify it appears in the feed.
+- Adjust system clock forward by 25 hours. Verify the app *asks* about the past BM.
+
+> [!IMPORTANT]
+> All manual verification steps in this milestone are slated to be fully automated in the next milestone once the infrastructure is stable.

@@ -14,4 +14,7 @@ interface WeightEntryDao {
 
     @Delete
     suspend fun deleteWeight(entry: WeightEntry)
+
+    @Query("SELECT * FROM weight_entries ORDER BY timestamp DESC LIMIT 1")
+    fun getLastWeightEntryFlow(): Flow<WeightEntry?>
 }
