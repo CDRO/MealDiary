@@ -103,10 +103,18 @@ fun MealDiaryApp(viewModel: MealViewModel) {
                     val timeStr = dateFormat.format(Date(item.timestamp))
                     when (item) {
                         is FeedItem.MealItem -> {
-                            Text("🍴 ${item.meal.description} at $timeStr", modifier = Modifier.padding(vertical = 4.dp))
+                            ListItem(
+                                headlineContent = { Text(item.meal.description) },
+                                leadingContent = { Text("🍴") },
+                                trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                            )
                         }
                         is FeedItem.BMItem -> {
-                            Text("💩 Bowel Movement at $timeStr", modifier = Modifier.padding(vertical = 4.dp), color = MaterialTheme.colorScheme.primary)
+                            ListItem(
+                                headlineContent = { Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) },
+                                leadingContent = { Text("💩") },
+                                trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                            )
                         }
                     }
                 }
