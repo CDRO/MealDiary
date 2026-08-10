@@ -1,51 +1,55 @@
-# Implementation Plan - Milestone 3: Reminders & Widgets
+# Implementation Plan - Milestone 4: Weight Tracker & Suggestion Engine
 
-This plan focuses on enhancing user engagement and accessibility through home screen widgets and personalized reminders.
+This plan introduces weight tracking capabilities and a smart suggestion engine that triggers after one week of app usage.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Widget Integration**: We will use **Jetpack Glance** for the home screen widget. It provides a Compose-like API for building widgets.
-> **Settings Persistence**: We will introduce **Jetpack DataStore** to persist user preferences (reminder times, BM interval).
-
-> [!WARNING]
-> **Notification Permissions**: On Android 13+ (API 33), the app must explicitly request notification permissions. This will be integrated into the main flow.
+> **Weight Tracking Opt-in**: By default, weight tracking is disabled. It will be suggested via a card in the main feed exactly 7 days after the user logs their first meal.
+> **Multi-Entry Support**: Users can log their weight multiple times per day. Each entry is timestamped.
 
 ## Proposed Changes
 
-### Dependencies
-- Add `androidx.glance:glance-appwidget` and `androidx.glance:glance-material3`.
-- Add `androidx.work:work-runtime-ktx`.
-- Add `androidx.datastore:datastore-preferences`.
-
 ### Data Layer
-- **[NEW] [UserPreferencesRepository.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/repository/UserPreferencesRepository.kt)**: Manage user settings like BM prompt interval (12h-48h) and meal reminder times.
 
-### Background Work
-- **[NEW] [ReminderWorker.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/service/ReminderWorker.kt)**: Worker to trigger system notifications for meals.
-- **[NEW] [ReminderManager.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/service/ReminderManager.kt)**: Logic to schedule `WorkManager` tasks based on user preferences.
+#### [MODIFY] [UserPreferencesRepository.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/repository/UserPreferencesRepository.kt)
+- Add `IS_WEIGHT_TRACKING_ENABLED` preference.
+- Add `WEIGHT_SUGGESTION_DISMISSED` preference.
 
-### Widgets
-- **[NEW] [MealDiaryWidget.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/widget/MealDiaryWidget.kt)**: A home screen widget with quick-action buttons for "Log Meal" and "Log BM".
-- **[NEW] [MealDiaryWidgetReceiver.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/widget/MealDiaryWidgetReceiver.kt)**: Receiver for updating the Glance widget.
+### View Model
+
+#### [MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)
+- Add `WeightItem` to `FeedItem` sealed class.
+- Update `unifiedFeed` to include `WeightEntry` items.
+- Expose `isWeightTrackingEnabled` state.
+- Expose `shouldShowWeightSuggestion`:
+    - `true` if weight tracking is disabled AND NOT dismissed AND first meal was > 7 days ago.
+- Implement `addWeightEntry(weight: Double)`.
 
 ### UI Layer
-- **[NEW] [SettingsActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/settings/SettingsActivity.kt)** (or a new Screen in MainActivity): A simple UI to configure meal times and the BM prompt interval.
-- **[MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)**: Incorporate settings into the `shouldAskAboutBM` logic.
+
+#### [MODIFY] [MainActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/MainActivity.kt)
+- Show a **Suggestion Card** for weight tracking when `shouldShowWeightSuggestion` is true.
+- If weight tracking is enabled:
+    - Add a "Log Weight" button (or a numeric input field) to the main screen.
+    - Display weight entries in the unified feed with a distinct icon (⚖️).
+- Refactor the input section to accommodate weight entry (keeping it zero-hurdle).
+
+#### [MODIFY] [SettingsActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/settings/SettingsActivity.kt)
+- Add a toggle for "Weight Tracking".
 
 ## Verification Plan
 
 ### Automated Tests
 - **Unit Tests**:
-    - Verify `ReminderManager` correctly calculates the next scheduled time for a given preference.
-    - Verify `shouldAskAboutBM` respects the user-configured interval (12h, 48h, etc.).
+    - Verify `shouldShowWeightSuggestion` logic (0 days, 6 days, 8 days).
+    - Verify `WeightEntry` items are correctly sorted and displayed in the unified feed.
 - **Interaction Tests**:
-    - **Glance Unit Tests**: Verify that widget buttons trigger the expected actions.
-    - **UI Tests**: Test the settings update flow.
+    - Verify the suggestion card appears after simulated 7 days.
+    - Verify logging a weight entry adds it to the feed correctly.
 
 ### Manual Verification
-- Deploy the app to the emulator.
-- Add the "MealDiary Widget" to the home screen.
-- Tap "Log Meal" on the widget and verify it appears in the app's history.
-- Change the meal reminder time in settings and verify (via logs/notification simulation) that the work is re-scheduled.
-- Change the BM prompt interval to 12h and verify the prompt appears earlier than 24h.
+- Deploy to emulator.
+- Adjust system clock forward by 8 days after first meal. Verify suggestion appears.
+- Enable weight tracking in settings. Verify the "Log Weight" UI appears.
+- Log weight and verify it shows up in the feed with the correct timestamp.

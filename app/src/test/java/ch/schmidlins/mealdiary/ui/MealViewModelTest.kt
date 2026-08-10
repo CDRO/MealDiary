@@ -34,6 +34,8 @@ class MealViewModelTest {
     private val firstMealTimestampFlow = MutableStateFlow<Long?>(null)
     private val lastBMTimestampFlow = MutableStateFlow<Long?>(null)
     private val bmIntervalFlow = MutableStateFlow(24)
+    private val isWeightTrackingEnabledFlow = MutableStateFlow(false)
+    private val weightSuggestionDismissedFlow = MutableStateFlow(false)
 
     @Before
     fun setup() {
@@ -45,9 +47,12 @@ class MealViewModelTest {
 
         every { mealRepository.allMeals } returns flowOf(emptyList())
         every { bmRepository.allBMs } returns flowOf(emptyList())
+        every { weightRepository.allWeightEntries } returns flowOf(emptyList())
         every { mealRepository.firstMealTimestamp } returns firstMealTimestampFlow
         every { bmRepository.lastBMTimestamp } returns lastBMTimestampFlow
         every { userPreferencesRepository.bmPromptIntervalHours } returns bmIntervalFlow
+        every { userPreferencesRepository.isWeightTrackingEnabled } returns isWeightTrackingEnabledFlow
+        every { userPreferencesRepository.weightSuggestionDismissed } returns weightSuggestionDismissedFlow
 
         viewModel = MealViewModel(mealRepository, bmRepository, weightRepository, userPreferencesRepository)
     }
@@ -114,6 +119,58 @@ class MealViewModelTest {
 
         val observer = mockk<Observer<Boolean>>(relaxed = true)
         viewModel.shouldAskAboutBM.observeForever(observer)
+
+        verify { observer.onChanged(false) }
+    }
+
+    @Test
+    fun `shouldShowWeightSuggestion is true after 7 days if not enabled or dismissed`() {
+        val now = System.currentTimeMillis()
+        firstMealTimestampFlow.value = now - (8 * 24 * 60 * 60 * 1000L) // 8 days ago
+        isWeightTrackingEnabledFlow.value = false
+        weightSuggestionDismissedFlow.value = false
+
+        val observer = mockk<Observer<Boolean>>(relaxed = true)
+        viewModel.shouldShowWeightSuggestion.observeForever(observer)
+
+        verify { observer.onChanged(true) }
+    }
+
+    @Test
+    fun `shouldShowWeightSuggestion is false before 7 days`() {
+        val now = System.currentTimeMillis()
+        firstMealTimestampFlow.value = now - (6 * 24 * 60 * 60 * 1000L) // 6 days ago
+        isWeightTrackingEnabledFlow.value = false
+        weightSuggestionDismissedFlow.value = false
+
+        val observer = mockk<Observer<Boolean>>(relaxed = true)
+        viewModel.shouldShowWeightSuggestion.observeForever(observer)
+
+        verify { observer.onChanged(false) }
+    }
+
+    @Test
+    fun `shouldShowWeightSuggestion is false if weight tracking is already enabled`() {
+        val now = System.currentTimeMillis()
+        firstMealTimestampFlow.value = now - (8 * 24 * 60 * 60 * 1000L)
+        isWeightTrackingEnabledFlow.value = true
+        weightSuggestionDismissedFlow.value = false
+
+        val observer = mockk<Observer<Boolean>>(relaxed = true)
+        viewModel.shouldShowWeightSuggestion.observeForever(observer)
+
+        verify { observer.onChanged(false) }
+    }
+
+    @Test
+    fun `shouldShowWeightSuggestion is false if suggestion was dismissed`() {
+        val now = System.currentTimeMillis()
+        firstMealTimestampFlow.value = now - (8 * 24 * 60 * 60 * 1000L)
+        isWeightTrackingEnabledFlow.value = false
+        weightSuggestionDismissedFlow.value = true
+
+        val observer = mockk<Observer<Boolean>>(relaxed = true)
+        viewModel.shouldShowWeightSuggestion.observeForever(observer)
 
         verify { observer.onChanged(false) }
     }
