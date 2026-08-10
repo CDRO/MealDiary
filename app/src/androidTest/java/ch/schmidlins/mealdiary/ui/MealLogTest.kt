@@ -2,6 +2,10 @@ package ch.schmidlins.mealdiary.ui
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import ch.schmidlins.mealdiary.DataOverviewScreen
 import ch.schmidlins.mealdiary.MealDiaryApp
 import ch.schmidlins.mealdiary.data.entities.Meal
 import ch.schmidlins.mealdiary.data.repository.BMRepository
@@ -43,7 +47,7 @@ class MealLogTest {
         val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
 
         composeTestRule.setContent {
-            MealDiaryApp(viewModel)
+            MealDiaryApp(viewModel, onNavigateToOverview = {})
         }
 
         composeTestRule.onNodeWithText("What did you eat?").performTextInput("Pizza")
@@ -59,7 +63,7 @@ class MealLogTest {
         val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
 
         composeTestRule.setContent {
-            MealDiaryApp(viewModel)
+            MealDiaryApp(viewModel, onNavigateToOverview = {})
         }
 
         composeTestRule.onNodeWithText("Have you had a bowel movement in the last 24h?").assertIsDisplayed()
@@ -74,7 +78,7 @@ class MealLogTest {
         val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
 
         composeTestRule.setContent {
-            MealDiaryApp(viewModel)
+            MealDiaryApp(viewModel, onNavigateToOverview = {})
         }
 
         composeTestRule.onNodeWithText("You've been using MealDiary for a week! Would you like to track your weight as well?").assertIsDisplayed()
@@ -88,11 +92,40 @@ class MealLogTest {
         val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
 
         composeTestRule.setContent {
-            MealDiaryApp(viewModel)
+            MealDiaryApp(viewModel, onNavigateToOverview = {})
         }
 
         composeTestRule.onNodeWithText("Weight (kg)").performTextInput("75.5")
         composeTestRule.onNodeWithText("Log").performClick()
         composeTestRule.onNodeWithText("75.5").assertDoesNotExist()
+    }
+
+    @Test
+    fun testNavigationToOverview() {
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
+
+        composeTestRule.setContent {
+            val navController = rememberNavController()
+            NavHost(navController = navController, startDestination = "main") {
+                composable("main") {
+                    MealDiaryApp(viewModel, onNavigateToOverview = { navController.navigate("overview") })
+                }
+                composable("overview") {
+                    DataOverviewScreen(viewModel, onBack = { navController.popBackStack() })
+                }
+            }
+        }
+
+        // Click Overview icon (represented by Info icon)
+        composeTestRule.onNodeWithContentDescription("Overview").performClick()
+
+        // Verify Overview screen is shown
+        composeTestRule.onNodeWithText("Daily History").assertIsDisplayed()
+        
+        // Click Back
+        composeTestRule.onNodeWithContentDescription("Back").performClick()
+
+        // Verify back on main screen
+        composeTestRule.onNodeWithText("What did you eat?").assertIsDisplayed()
     }
 }
