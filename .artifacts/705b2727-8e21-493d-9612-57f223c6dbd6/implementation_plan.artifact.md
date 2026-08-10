@@ -1,56 +1,51 @@
-# Implementation Plan - Milestone 2: History & Suppression Logic
+# Implementation Plan - Milestone 3: Reminders & Widgets
 
-This plan focuses on implementing a unified history feed and the smart suppression/prompt logic for bowel movement tracking.
+This plan focuses on enhancing user engagement and accessibility through home screen widgets and personalized reminders.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **BM Prompt Logic**: After the initial 24h suppression period (from the first meal), the app will actively ask "Have you had a bowel movement?" if none have been logged in the last 24 hours.
+> **Widget Integration**: We will use **Jetpack Glance** for the home screen widget. It provides a Compose-like API for building widgets.
+> **Settings Persistence**: We will introduce **Jetpack DataStore** to persist user preferences (reminder times, BM interval).
 
-> [!TIP]
-> **Configurability**: While Milestone 2 focuses on the hardcoded 24h interval, Milestone 3 will introduce settings to adjust this interval (12h - 48h or disabled).
+> [!WARNING]
+> **Notification Permissions**: On Android 13+ (API 33), the app must explicitly request notification permissions. This will be integrated into the main flow.
 
 ## Proposed Changes
 
+### Dependencies
+- Add `androidx.glance:glance-appwidget` and `androidx.glance:glance-material3`.
+- Add `androidx.work:work-runtime-ktx`.
+- Add `androidx.datastore:datastore-preferences`.
+
 ### Data Layer
+- **[NEW] [UserPreferencesRepository.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/repository/UserPreferencesRepository.kt)**: Manage user settings like BM prompt interval (12h-48h) and meal reminder times.
 
-#### [MODIFY] [MealDao.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/dao/MealDao.kt)
-- Add a query to fetch the timestamp of the earliest meal entry.
+### Background Work
+- **[NEW] [ReminderWorker.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/service/ReminderWorker.kt)**: Worker to trigger system notifications for meals.
+- **[NEW] [ReminderManager.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/service/ReminderManager.kt)**: Logic to schedule `WorkManager` tasks based on user preferences.
 
-#### [MODIFY] [BowelMovementDao.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/dao/BowelMovementDao.kt)
-- Add a query to fetch the timestamp of the most recent BM entry.
-
-### View Model
-
-#### [MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)
-- Implement a `unifiedFeed` Flow that combines Meals and Bowel Movements.
-- Implement logic for `shouldAskAboutBM`:
-    - `false` if first meal was < 24h ago.
-    - `true` if first meal was > 24h ago AND last BM was > 24h ago (or doesn't exist).
-- Expose `timeSinceLastBM` state.
+### Widgets
+- **[NEW] [MealDiaryWidget.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/widget/MealDiaryWidget.kt)**: A home screen widget with quick-action buttons for "Log Meal" and "Log BM".
+- **[NEW] [MealDiaryWidgetReceiver.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/widget/MealDiaryWidgetReceiver.kt)**: Receiver for updating the Glance widget.
 
 ### UI Layer
-
-#### [MODIFY] [MainActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/MainActivity.kt)
-- Add a "BM Prompt" section (e.g., a card or banner) that appears when `shouldAskAboutBM` is true.
-- Refactor the feed to use a unified list with chronological sorting.
+- **[NEW] [SettingsActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/settings/SettingsActivity.kt)** (or a new Screen in MainActivity): A simple UI to configure meal times and the BM prompt interval.
+- **[MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)**: Incorporate settings into the `shouldAskAboutBM` logic.
 
 ## Verification Plan
 
 ### Automated Tests
 - **Unit Tests**:
-    - Verify `shouldAskAboutBM` is `false` if first meal is < 24h old.
-    - Verify `shouldAskAboutBM` is `true` if first meal is > 24h old and no BM exists.
-    - Verify `shouldAskAboutBM` becomes `false` immediately after a BM is logged.
+    - Verify `ReminderManager` correctly calculates the next scheduled time for a given preference.
+    - Verify `shouldAskAboutBM` respects the user-configured interval (12h, 48h, etc.).
 - **Interaction Tests**:
-    - Verify the BM Prompt UI is not present in the "suppression" phase.
-    - Verify the unified feed order.
+    - **Glance Unit Tests**: Verify that widget buttons trigger the expected actions.
+    - **UI Tests**: Test the settings update flow.
 
 ### Manual Verification
-- Deploy to emulator.
-- Log a meal. Verify no BM prompt appears.
-- Log a BM. Verify it appears in the feed.
-- Adjust system clock forward by 25 hours. Verify the app *asks* about the past BM.
-
-> [!IMPORTANT]
-> All manual verification steps in this milestone are slated to be fully automated in the next milestone once the infrastructure is stable.
+- Deploy the app to the emulator.
+- Add the "MealDiary Widget" to the home screen.
+- Tap "Log Meal" on the widget and verify it appears in the app's history.
+- Change the meal reminder time in settings and verify (via logs/notification simulation) that the work is re-scheduled.
+- Change the BM prompt interval to 12h and verify the prompt appears earlier than 24h.
