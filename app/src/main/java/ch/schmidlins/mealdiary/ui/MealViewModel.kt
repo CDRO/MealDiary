@@ -44,6 +44,19 @@ class MealViewModel(
     val meals: LiveData<List<Meal>> = mealRepository.allMeals.asLiveData()
     val bms: LiveData<List<BowelMovement>> = bmRepository.allBMs.asLiveData()
 
+    val isWeightTrackingEnabled: LiveData<Boolean> = userPreferencesRepository.isWeightTrackingEnabled.asLiveData()
+
+    val shouldShowWeightSuggestion: LiveData<Boolean> = combine(
+        userPreferencesRepository.isWeightTrackingEnabled,
+        userPreferencesRepository.weightSuggestionDismissed,
+        mealRepository.firstMealTimestamp
+    ) { enabled, dismissed, firstMeal ->
+        val now = System.currentTimeMillis()
+        val sevenDaysMillis = 7 * 24 * 60 * 60 * 1000L
+        
+        !enabled && !dismissed && firstMeal != null && (now - firstMeal) > sevenDaysMillis
+    }.asLiveData()
+
     private val ticker = flow {
         while (true) {
             emit(System.currentTimeMillis())
@@ -127,6 +140,28 @@ class MealViewModel(
     fun deleteWeight(entry: WeightEntry) {
         viewModelScope.launch {
             weightRepository.deleteWeight(entry)
+        }
+    }
+
+    fun addWeightEntry(weight: Double) {
+        viewModelScope.launch {
+            val entry = WeightEntry(
+                timestamp = System.currentTimeMillis(),
+                weight = weight
+            )
+            weightRepository.insertWeight(entry)
+        }
+    }
+
+    fun dismissWeightSuggestion() {
+        viewModelScope.launch {
+            userPreferencesRepository.dismissWeightSuggestion()
+        }
+    }
+
+    fun enableWeightTracking() {
+        viewModelScope.launch {
+            userPreferencesRepository.updateWeightTrackingEnabled(true)
         }
     }
 }
