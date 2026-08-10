@@ -1,5 +1,6 @@
 package ch.schmidlins.mealdiary
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -18,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ch.schmidlins.mealdiary.data.AppDatabase
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
+import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
 import ch.schmidlins.mealdiary.data.repository.WeightRepository
 import ch.schmidlins.mealdiary.ui.FeedItem
 import ch.schmidlins.mealdiary.ui.MealViewModel
@@ -33,7 +36,8 @@ class MainActivity : ComponentActivity() {
         val mealRepository = MealRepository(database.mealDao())
         val bmRepository = BMRepository(database.bowelMovementDao())
         val weightRepository = WeightRepository(database.weightEntryDao())
-        val viewModelFactory = MealViewModelFactory(mealRepository, bmRepository, weightRepository)
+        val prefsRepo = UserPreferencesRepository(this)
+        val viewModelFactory = MealViewModelFactory(mealRepository, bmRepository, weightRepository, prefsRepo)
 
         setContent {
             val viewModel: MealViewModel = viewModel(factory = viewModelFactory)
@@ -45,6 +49,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MealDiaryApp(viewModel: MealViewModel) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var mealText by remember { mutableStateOf("") }
     val feedItems by viewModel.unifiedFeed.observeAsState(emptyList())
     val shouldAskBM by viewModel.shouldAskAboutBM.observeAsState(false)
@@ -54,7 +59,19 @@ fun MealDiaryApp(viewModel: MealViewModel) {
     val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("MealDiary - $patternResult") }) }
+        topBar = { 
+            TopAppBar(
+                title = { Text("MealDiary - $patternResult") },
+                actions = {
+                    IconButton(onClick = { 
+                        val intent = Intent(context, ch.schmidlins.mealdiary.ui.settings.SettingsActivity::class.java)
+                        context.startActivity(intent)
+                    }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                }
+            ) 
+        }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
             timeSinceBM?.let {

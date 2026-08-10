@@ -1,36 +1,34 @@
-# Walkthrough - Milestone 1: Core Infrastructure
+# Walkthrough - Milestone 2: History & Suppression Logic
 
-Milestone 1 established the technical foundation of the MealDiary application, focusing on "zero-hurdle" logging and high-performance native analysis.
+Milestone 2 introduced the smart logic for bowel movement prompts and a unified chronological history feed.
 
 ## Changes Made
 
-### 1. Build System & Foundation
-- Migrated to **Jetpack Compose** and **Material 3**.
-- Updated `compileSdk` and `targetSdk` to 37 for modern API support.
-- Configured **Native C++ (CMake/JNI)** support for the future heuristic engine.
+### 1. Smart Suppression & Prompt Logic
+- **24-hour Suppression**: The app now hides the Bowel Movement (BM) prompt for the first 24 hours after the user's very first meal entry to avoid overwhelming new users.
+- **Active Prompting**: After the 24h threshold, the app displays a prominent prompt: *"Have you had a bowel movement in the last 24h?"* if none have been logged recently.
+- **Reactive Timer**: Implemented a background ticker in the ViewModel that updates the "Time since last BM" display every minute without requiring user interaction.
 
-### 2. Data Persistence (Room)
-- Implemented `AppDatabase` with the following entities:
-  - `Meal`: For tracking food intake.
-  - `BowelMovement`: For tracking gastrointestinal events.
-  - `WeightEntry`: For weight tracking (supporting multi-entry per day).
-- Created corresponding DAOs and Repositories.
+### 2. Unified History Feed
+- Refactored the UI to use a single chronological feed using Material 3 `ListItem` components.
+- Distinct visuals for Meals (🍴) and Bowel Movements (💩).
+- Integrated **Delete** functionality for all feed items with confirmation-less removal (keeping it "zero-hurdle").
 
-### 3. "Zero-Hurdle" UI (Initial)
-- Created a minimalistic `MainActivity` using Compose.
-- Features one-tap logging for both Meals and Bowel Movements.
-- Displays a dynamic title sourced from the native C++ analysis engine.
+### 3. Data & Architecture
+- **Expanded DAOs**: Added queries for earliest meal and latest BM timestamps.
+- **Weight Repository**: Prepared the `WeightRepository` and updated `WeightEntryDao` with `getLastWeightEntryFlow` for future milestones.
+- **Native Logging**: Added native Android logging to the C++ engine to facilitate JNI debugging.
 
 ### 4. Testing & Quality Assurance
-- Implemented **Unit Tests** for `MealRepository` using MockK and Coroutines Test.
-- Implemented **Instrumented Interaction Tests** for the Compose UI.
-- All tests verified passing on an emulator.
+- **Comprehensive Unit Tests**: Implemented 100% coverage for the `shouldAskAboutBM` suppression logic in `MealViewModelTest`.
+- **Instrumented Interaction Tests**: Added tests to verify the visibility of the BM prompt based on the 24-hour business rule.
+- All 9 unit tests and 3 instrumented tests are passing.
 
 ## How to Verify
-1.  Launch the app on an emulator.
-2.  Observe the title "MealDiary - No patterns detected yet." (JNI integration).
-3.  Enter text and click "Log Meal" to see it added to the list.
-4.  Click "Log BM" to log a bowel movement event.
+1.  **Fresh Install**: Log a meal. The BM prompt should **not** appear.
+2.  **History**: Log multiple meals and BMs. They should appear in descending chronological order.
+3.  **Deletion**: Tap the trash icon on any item. It should be removed instantly.
+4.  **Prompt (Simulated)**: Adjust the system clock forward by 25 hours. The app should display the prompt asking about past BMs.
 
 ## Next Steps
-In Milestone 2, we will implement the 24-hour smart suppression logic and a more detailed history feed.
+In Milestone 3, we will add home screen widgets for even faster logging and configurable reminder intervals.

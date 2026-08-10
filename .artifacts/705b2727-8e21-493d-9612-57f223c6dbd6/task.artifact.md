@@ -1,24 +1,25 @@
-# Task: Milestone 2 Execution
+# Task: Milestone 3 Execution
 
 - [ ] GitHub Infrastructure
-    - [ ] Create Milestone 2 on GitHub
-    - [ ] Create Issue #2 for Milestone 2
-    - [ ] Create branch `feature/m2-history`
-    - [ ] Create Pull Request for Milestone 2
+    - [ ] Create Milestone 3 on GitHub
+    - [ ] Create Issue #3 for Milestone 3
+    - [ ] Create branch `feature/m3-widgets-reminders`
+    - [ ] Create Pull Request for Milestone 3
 - [ ] Technical Setup
     - [ ] Baseline Build (`.\gradlew.bat assembleDebug`)
+    - [ ] Add Glance, WorkManager, and DataStore dependencies
 - [ ] Implementation Loop (10 iterations)
-    - [ ] Review loop 1/10: Repository & DAO updates
-    - [ ] Review loop 2/10: ViewModel suppression logic
-    - [ ] Review loop 3/10: Unified Feed implementation
-    - [ ] Review loop 4/10: UI components for History items
-    - [ ] Review loop 5/10: BM Tracker UI implementation
-    - [ ] Review loop 6/10: Weight Repository setup
-    - [ ] Review loop 7/10: Logic optimization & Refactoring
-    - [ ] Review loop 8/10: Unit tests for suppression
-    - [ ] Review loop 9/10: UI tests for history
-    - [ ] Review loop 10/10: Final polish & JNI integration check
+    - [ ] Review loop 1/10: DataStore Preference Repository
+    - [ ] Review loop 2/10: ReminderWorker & Notification logic
+    - [ ] Review loop 3/10: ReminderManager for scheduling
+    - [ ] Review loop 4/10: Glance Widget implementation
+    - [ ] Review loop 5/10: Widget Action handling
+    - [ ] Review loop 6/10: Settings UI components
+    - [ ] Review loop 7/10: Integrating Settings into ViewModel logic
+    - [ ] Review loop 8/10: Unit tests for scheduling & interval logic
+    - [ ] Review loop 9/10: Widget interaction tests
+    - [ ] Review loop 10/10: Final polish, permissions, and cleanup
 - [ ] Finalization
-    - [ ] Final Build & Test
+    - [ ] Final Build & Acceptance Tests on Device
     - [ ] Merge PR
     - [ ] Close Issue & Milestone

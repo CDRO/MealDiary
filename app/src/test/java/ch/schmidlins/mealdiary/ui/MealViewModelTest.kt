@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
+import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
 import ch.schmidlins.mealdiary.data.repository.WeightRepository
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -28,10 +28,12 @@ class MealViewModelTest {
     private lateinit var mealRepository: MealRepository
     private lateinit var bmRepository: BMRepository
     private lateinit var weightRepository: WeightRepository
+    private lateinit var userPreferencesRepository: UserPreferencesRepository
     private lateinit var viewModel: MealViewModel
 
     private val firstMealTimestampFlow = MutableStateFlow<Long?>(null)
     private val lastBMTimestampFlow = MutableStateFlow<Long?>(null)
+    private val bmIntervalFlow = MutableStateFlow(24)
 
     @Before
     fun setup() {
@@ -39,13 +41,15 @@ class MealViewModelTest {
         mealRepository = mockk(relaxed = true)
         bmRepository = mockk(relaxed = true)
         weightRepository = mockk(relaxed = true)
+        userPreferencesRepository = mockk(relaxed = true)
 
         every { mealRepository.allMeals } returns flowOf(emptyList())
         every { bmRepository.allBMs } returns flowOf(emptyList())
         every { mealRepository.firstMealTimestamp } returns firstMealTimestampFlow
         every { bmRepository.lastBMTimestamp } returns lastBMTimestampFlow
+        every { userPreferencesRepository.bmPromptIntervalHours } returns bmIntervalFlow
 
-        viewModel = MealViewModel(mealRepository, bmRepository, weightRepository)
+        viewModel = MealViewModel(mealRepository, bmRepository, weightRepository, userPreferencesRepository)
     }
 
     @After
@@ -89,10 +93,11 @@ class MealViewModelTest {
     }
 
     @Test
-    fun `shouldAskAboutBM is true when first meal and last BM were more than 24h ago`() {
+    fun `shouldAskAboutBM respects configured 12h interval`() {
         val now = System.currentTimeMillis()
-        firstMealTimestampFlow.value = now - (48 * 60 * 60 * 1000) // 2 days ago
-        lastBMTimestampFlow.value = now - (25 * 60 * 60 * 1000) // 25h ago
+        firstMealTimestampFlow.value = now - (25 * 60 * 60 * 1000) // 25h ago
+        lastBMTimestampFlow.value = now - (13 * 60 * 60 * 1000) // 13h ago
+        bmIntervalFlow.value = 12
 
         val observer = mockk<Observer<Boolean>>(relaxed = true)
         viewModel.shouldAskAboutBM.observeForever(observer)
@@ -101,10 +106,11 @@ class MealViewModelTest {
     }
 
     @Test
-    fun `shouldAskAboutBM is false when last BM was less than 24h ago`() {
+    fun `shouldAskAboutBM respects configured 48h interval`() {
         val now = System.currentTimeMillis()
-        firstMealTimestampFlow.value = now - (48 * 60 * 60 * 1000) // 2 days ago
-        lastBMTimestampFlow.value = now - (23 * 60 * 60 * 1000) // 23h ago
+        firstMealTimestampFlow.value = now - (60 * 60 * 60 * 1000) // long ago
+        lastBMTimestampFlow.value = now - (25 * 60 * 60 * 1000) // 25h ago
+        bmIntervalFlow.value = 48
 
         val observer = mockk<Observer<Boolean>>(relaxed = true)
         viewModel.shouldAskAboutBM.observeForever(observer)
