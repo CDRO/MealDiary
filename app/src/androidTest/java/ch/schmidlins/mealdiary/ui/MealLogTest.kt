@@ -6,6 +6,7 @@ import ch.schmidlins.mealdiary.MealDiaryApp
 import ch.schmidlins.mealdiary.data.entities.Meal
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
+import ch.schmidlins.mealdiary.data.repository.WeightRepository
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -21,10 +22,14 @@ class MealLogTest {
     fun testMealLoggingFlow() {
         val mealRepo = mockk<MealRepository>(relaxed = true)
         val bmRepo = mockk<BMRepository>(relaxed = true)
-        every { mealRepo.allMeals } returns flowOf(emptyList<Meal>())
-        every { bmRepo.allBMs } returns flowOf(emptyList())
+        val weightRepo = mockk<WeightRepository>(relaxed = true)
         
-        val viewModel = MealViewModel(mealRepo, bmRepo)
+        every { mealRepo.allMeals } returns flowOf(emptyList<Meal>())
+        every { mealRepo.firstMealTimestamp } returns flowOf(null)
+        every { bmRepo.allBMs } returns flowOf(emptyList())
+        every { bmRepo.lastBMTimestamp } returns flowOf(null)
+        
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo)
 
         composeTestRule.setContent {
             MealDiaryApp(viewModel)
@@ -38,5 +43,31 @@ class MealLogTest {
 
         // Verify the text is cleared (basic check for interaction)
         composeTestRule.onNodeWithText("Pizza").assertDoesNotExist()
+    }
+
+    @Test
+    fun testBMPromptVisibility() {
+        val mealRepo = mockk<MealRepository>(relaxed = true)
+        val bmRepo = mockk<BMRepository>(relaxed = true)
+        val weightRepo = mockk<WeightRepository>(relaxed = true)
+        
+        val now = System.currentTimeMillis()
+        // First meal was 25h ago -> should prompt
+        every { mealRepo.allMeals } returns flowOf(emptyList())
+        every { mealRepo.firstMealTimestamp } returns flowOf(now - (25 * 60 * 60 * 1000))
+        every { bmRepo.allBMs } returns flowOf(emptyList())
+        every { bmRepo.lastBMTimestamp } returns flowOf(null)
+        
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo)
+
+        composeTestRule.setContent {
+            MealDiaryApp(viewModel)
+        }
+
+        // Verify prompt is visible
+        composeTestRule.onNodeWithText("Have you had a bowel movement in the last 24h?").assertIsDisplayed()
+        
+        // Click Yes
+        composeTestRule.onNodeWithText("Yes, Log now").performClick()
     }
 }
