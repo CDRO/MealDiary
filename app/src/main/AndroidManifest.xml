@@ -23,6 +23,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MealDiary" />
+
         <receiver
             android:name=".ui.widget.MealDiaryWidgetReceiver"
             android:exported="true">
