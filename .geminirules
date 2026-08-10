@@ -31,3 +31,17 @@ For each iteration (1 through 10):
 - All milestone and requirement files are stored in the directory: `docs/artifacts/`.
 - When starting a new milestone, look inside this folder, locate the next sequential milestone in MASTER_PLAN.md, and read its contents completely before executing any `gh` commands. Then create a folder under docs/artifacts/milestones/ and document and version implementation_plan.md and tasks.md there.
 - When creating new milestones, store them in the directory: `docs/artifacts/`.
+
+# Design & UX Principles
+- The application must be extremely simple to use.
+- Goal: Zero hurdle for the user to log their meals.
+- UI should prioritize speed and minimal interaction steps.
+
+# Performance & Native Implementation
+- For high-performance tasks (e.g., complex data analysis heuristics) or intensive visuals, prioritize C++ implementation via JNI if it renders better results than Kotlin.
+- Avoid brute-forcing computationally heavy logic in Kotlin; evaluate native performance early.
+
+# Testing & Quality Assurance
+- For every milestone, write comprehensive unit tests and interaction tests.
+- All new behaviors must be tested, including Home Screen Widgets.
+- Performance: Ensure the test suite runs as fast as possible. Prefer JVM-based tests (Unit tests/Robolectric) for speed unless instrumentation is strictly required.

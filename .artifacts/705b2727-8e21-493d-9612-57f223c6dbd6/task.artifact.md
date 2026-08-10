@@ -1,0 +1,27 @@
+# Task: Milestone 1 Execution
+
+- [ ] GitHub Infrastructure
+    - [ ] Create Milestone 1 on GitHub
+    - [ ] Create Issue #1 for Milestone 1
+    - [ ] Create branch `feature/m1-core`
+    - [ ] Create Pull Request for Milestone 1
+- [ ] Technical Setup
+    - [ ] Baseline Build (`.\gradlew.bat assembleDebug`)
+    - [ ] Migrate to Jetpack Compose
+    - [ ] Configure Room Persistence
+    - [ ] Configure Native C++ (CMake)
+- [ ] Implementation Loop (10 iterations)
+    - [ ] Review loop 1/10
+    - [ ] Review loop 2/10
+    - [ ] Review loop 3/10
+    - [ ] Review loop 4/10
+    - [ ] Review loop 5/10
+    - [ ] Review loop 6/10
+    - [ ] Review loop 7/10
+    - [ ] Review loop 8/10
+    - [ ] Review loop 9/10
+    - [ ] Review loop 10/10
+- [ ] Finalization
+    - [ ] Final Build & Test
+    - [ ] Merge PR
+    - [ ] Close Issue & Milestone
