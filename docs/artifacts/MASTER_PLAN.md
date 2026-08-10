@@ -5,43 +5,39 @@ A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, wei
 
 ## Milestones
 
-### Milestone 1: Core Infrastructure
+### Milestone 1: Core Infrastructure (Completed)
 - **Objective**: Establish the technical foundation.
-- **Tasks**:
-    - Setup Jetpack Compose.
-    - Setup Room Database with models for `Meal`, `BowelMovement`, and `WeightEntry`.
-    - Setup Native C++ (CMake) build support.
-    - Implement basic "Zero Hurdle" logging UI.
-    - Write baseline unit and interaction tests.
 
-### Milestone 2: History & Suppression Logic
+### Milestone 2: History & Suppression Logic (Completed)
 - **Objective**: Data persistence and smart visibility.
-- **Tasks**:
-    - Feed UI showing all entries.
-    - Implement 24-hour suppression for BM tracking.
-    - Room migrations/schemas for future analysis.
 
-### Milestone 3: Reminders & Widgets
+### Milestone 3: Reminders & Widgets (Completed)
 - **Objective**: Reduce logging hurdles via OS integration.
-- **Tasks**:
-    - Home screen widgets (Glance/RemoteViews).
-    - Personalized meal-time reminders (WorkManager).
-    - Settings UI for meal-to-time mapping.
 
-### Milestone 4: Weight Tracker & Suggestion Engine
+### Milestone 4: Weight Tracker & Suggestion Engine (Completed)
 - **Objective**: Incremental feature rollout.
-- **Tasks**:
-    - Weight entry UI and history.
-    - Suggestion logic (trigger after 7 days of use).
 
-### Milestone 5: Heuristic Analysis (C++ Native)
+### Milestone 5: Data Overview
+- **Objective**: Provide a high-level view of daily and weekly activity.
+- **Tasks**:
+    - Implement a "Calendar" or "Daily Summary" view.
+    - Visualize meal frequency and BM timing on a timeline.
+    - Add navigation between the main feed and the overview screen.
+
+### Milestone 6: Advanced Statistics
+- **Objective**: Extract quantitative insights from the logged data.
+- **Tasks**:
+    - Implement stats for BM frequency, weight trends, and top foods.
+    - Create visual charts (weight over time, BM timing distributions).
+
+### Milestone 7: Heuristic Analysis (C++ Native)
 - **Objective**: Data-driven insights.
 - **Tasks**:
     - Native C++ correlation engine.
     - Pattern matching (Food vs. BM timing).
     - Insight UI.
 
-### Milestone 6: Final Polish
+### Milestone 8: Final Polish
 - **Objective**: Quality assurance and UX refinement.
 - **Tasks**:
     - Haptics, animations.
