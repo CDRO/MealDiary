@@ -31,6 +31,8 @@ import ch.schmidlins.mealdiary.ui.FeedItem
 import ch.schmidlins.mealdiary.ui.MealViewModel
 import ch.schmidlins.mealdiary.ui.MealViewModelFactory
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.*
 
 class MainActivity : ComponentActivity() {
@@ -289,21 +291,39 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
 
 @Composable
 fun TimelineComponent(items: List<FeedItem>) {
-    Card(modifier = Modifier.fillMaxWidth().height(80.dp)) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
+    val today = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val dayMillis = 24 * 60 * 60 * 1000L
+
+    Card(modifier = Modifier.fillMaxWidth().height(100.dp)) {
+        Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            // Baseline
+            Box(modifier = Modifier.fillMaxWidth().height(2.dp).background(MaterialTheme.colorScheme.outlineVariant).align(androidx.compose.ui.Alignment.Center))
+            
             if (items.isEmpty()) {
-                Text("No activities today", style = MaterialTheme.typography.bodyMedium)
+                Text("No activities today", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
             } else {
-                items.sortedBy { it.timestamp }.forEach { item ->
+                items.forEach { item ->
+                    val offset = ((item.timestamp - today).toFloat() / dayMillis).coerceIn(0f, 1f)
                     val color = if (item is FeedItem.MealItem) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
                     val icon = if (item is FeedItem.MealItem) "🍴" else "💩"
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                        Text(icon)
-                        Box(modifier = Modifier.size(8.dp).background(color, androidx.compose.foundation.shape.CircleShape))
+                    
+                    Column(
+                        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                        modifier = Modifier.align(androidx.compose.ui.Alignment.CenterStart).fillMaxWidth(offset)
+                    ) {
+                        // This is a simple way to position items along the width. 
+                        // For better precision, use a Canvas or Box with offset.
+                    }
+                    
+                    // Improved positioning using Box with padding/bias or custom layout
+                    Box(modifier = Modifier.fillMaxWidth().align(androidx.compose.ui.Alignment.Center)) {
+                        Column(
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                            modifier = Modifier.align(androidx.compose.ui.BiasAlignment(horizontalBias = (offset * 2) - 1, verticalBias = 0f))
+                        ) {
+                            Text(icon, style = MaterialTheme.typography.bodySmall)
+                            Box(modifier = Modifier.size(6.dp).background(color, androidx.compose.foundation.shape.CircleShape))
+                        }
                     }
                 }
             }
