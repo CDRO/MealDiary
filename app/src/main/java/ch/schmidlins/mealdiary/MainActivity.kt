@@ -149,6 +149,20 @@ fun MealDiaryApp(viewModel: MealViewModel) {
                                 }
                             )
                         }
+                        is FeedItem.WeightItem -> {
+                            ListItem(
+                                headlineContent = { Text("Weight: ${item.weightEntry.weight} ${item.weightEntry.unit}", color = MaterialTheme.colorScheme.secondary) },
+                                leadingContent = { Text("⚖️") },
+                                trailingContent = {
+                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
+                                        IconButton(onClick = { viewModel.deleteWeight(item.weightEntry) }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }

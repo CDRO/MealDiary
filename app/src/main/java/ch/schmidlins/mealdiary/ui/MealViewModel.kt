@@ -3,6 +3,7 @@ package ch.schmidlins.mealdiary.ui
 import androidx.lifecycle.*
 import ch.schmidlins.mealdiary.data.entities.BowelMovement
 import ch.schmidlins.mealdiary.data.entities.Meal
+import ch.schmidlins.mealdiary.data.entities.WeightEntry
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
@@ -25,6 +26,11 @@ sealed class FeedItem {
     data class BMItem(val bm: BowelMovement) : FeedItem() {
         override val id: Long = bm.id
         override val timestamp: Long = bm.timestamp
+    }
+
+    data class WeightItem(val weightEntry: WeightEntry) : FeedItem() {
+        override val id: Long = weightEntry.id
+        override val timestamp: Long = weightEntry.timestamp
     }
 }
 
@@ -58,11 +64,13 @@ class MealViewModel(
 
     val unifiedFeed: LiveData<List<FeedItem>> = combine(
         mealRepository.allMeals,
-        bmRepository.allBMs
-    ) { meals, bms ->
+        bmRepository.allBMs,
+        weightRepository.allWeightEntries
+    ) { meals, bms, weights ->
         val items = mutableListOf<FeedItem>()
         items.addAll(meals.map { FeedItem.MealItem(it) })
         items.addAll(bms.map { FeedItem.BMItem(it) })
+        items.addAll(weights.map { FeedItem.WeightItem(it) })
         items.sortByDescending { it.timestamp }
         items
     }.asLiveData()
@@ -113,6 +121,12 @@ class MealViewModel(
     fun deleteBM(bm: BowelMovement) {
         viewModelScope.launch {
             bmRepository.deleteBM(bm)
+        }
+    }
+
+    fun deleteWeight(entry: WeightEntry) {
+        viewModelScope.launch {
+            weightRepository.deleteWeight(entry)
         }
     }
 }
