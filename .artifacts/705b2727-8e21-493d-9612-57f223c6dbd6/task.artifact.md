@@ -4,27 +4,27 @@
     - [x] Create Milestone 4 on GitHub
     - [x] Create Issue #7 for Milestone 4
     - [x] Create branch `feature/m4-weight-tracker`
-    - [/] Create Pull Request for Milestone 4
-- [ ] Technical Implementation
-    - [ ] Update `UserPreferencesRepository` with weight flags
-    - [ ] Update `FeedItem` sealed class for Weight
-    - [ ] Implement weight tracking logic in `MealViewModel`
-    - [ ] Implement weight suggestion logic in `MealViewModel`
-    - [ ] Add weight toggle to `SettingsActivity`
-    - [ ] Create Weight Logging UI in `MainActivity`
-    - [ ] Display Weight entries in Unified Feed
-- [ ] Implementation Loop (10 iterations)
-    - [ ] Review loop 1/10
-    - [ ] Review loop 2/10
-    - [ ] Review loop 3/10
-    - [ ] Review loop 4/10
-    - [ ] Review loop 5/10
-    - [ ] Review loop 6/10
-    - [ ] Review loop 7/10
-    - [ ] Review loop 8/10
-    - [ ] Review loop 9/10
-    - [ ] Review loop 10/10
+    - [x] Create Pull Request for Milestone 4
+- [x] Technical Implementation
+    - [x] Update `UserPreferencesRepository` with weight flags
+    - [x] Update `FeedItem` sealed class for Weight
+    - [x] Implement weight tracking logic in `MealViewModel`
+    - [x] Implement weight suggestion logic in `MealViewModel`
+    - [x] Add weight toggle to `SettingsActivity`
+    - [x] Create Weight Logging UI in `MainActivity`
+    - [x] Display Weight entries in Unified Feed
+- [x] Implementation Loop (10 iterations)
+    - [x] Review loop 1/10: Preference Repository updates
+    - [x] Review loop 2/10: ViewModel feed integration
+    - [x] Review loop 3/10: ViewModel (addWeight, suggestion logic)
+    - [x] Review loop 4/10: MainActivity UI (suggestion card, weight input)
+    - [x] Review loop 5/10: SettingsActivity (weight toggle)
+    - [x] Review loop 6/10: Unit tests (MealViewModelTest)
+    - [x] Review loop 7/10: Interaction tests (MealLogTest)
+    - [x] Review loop 8/10: Repository check and final logic polish
+    - [x] Review loop 9/10: Refined Weight Logging UI with a Card
+    - [x] Review loop 10/10: Final review and cleanup
 - [ ] Finalization
-    - [ ] Final Build & Verification on Device
-    - [ ] Merge PR
+    - [x] Final Build & Verification on Device
+    - [/] Merge PR
     - [ ] Close Issue & Milestone
