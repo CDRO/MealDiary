@@ -5,6 +5,7 @@ import ch.schmidlins.mealdiary.data.entities.BowelMovement
 import ch.schmidlins.mealdiary.data.entities.Meal
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
+import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
 import ch.schmidlins.mealdiary.data.repository.WeightRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
@@ -30,7 +31,8 @@ sealed class FeedItem {
 class MealViewModel(
     private val mealRepository: MealRepository,
     private val bmRepository: BMRepository,
-    private val weightRepository: WeightRepository
+    private val weightRepository: WeightRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     val meals: LiveData<List<Meal>> = mealRepository.allMeals.asLiveData()
@@ -67,17 +69,19 @@ class MealViewModel(
 
     val shouldAskAboutBM: LiveData<Boolean> = combine(
         mealRepository.firstMealTimestamp,
-        bmRepository.lastBMTimestamp
-    ) { firstMeal, lastBM ->
+        bmRepository.lastBMTimestamp,
+        userPreferencesRepository.bmPromptIntervalHours
+    ) { firstMeal, lastBM, intervalHours ->
         val now = System.currentTimeMillis()
-        val oneDayMillis = 24 * 60 * 60 * 1000L
+        val intervalMillis = intervalHours * 60 * 60 * 1000L
+        val oneDayMillis = 24 * 60 * 60 * 1000L // First meal threshold remains 24h
         
         if (firstMeal == null) return@combine false
         
         val passedFirstMealThreshold = (now - firstMeal) > oneDayMillis
         if (!passedFirstMealThreshold) return@combine false
         
-        val noRecentBM = lastBM == null || (now - lastBM) > oneDayMillis
+        val noRecentBM = lastBM == null || (now - lastBM) > intervalMillis
         noRecentBM
     }.asLiveData()
 
@@ -116,12 +120,13 @@ class MealViewModel(
 class MealViewModelFactory(
     private val mealRepository: MealRepository,
     private val bmRepository: BMRepository,
-    private val weightRepository: WeightRepository
+    private val weightRepository: WeightRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MealViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return MealViewModel(mealRepository, bmRepository, weightRepository) as T
+            return MealViewModel(mealRepository, bmRepository, weightRepository, userPreferencesRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

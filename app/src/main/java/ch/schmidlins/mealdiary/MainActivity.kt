@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ch.schmidlins.mealdiary.data.AppDatabase
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
+import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
 import ch.schmidlins.mealdiary.data.repository.WeightRepository
 import ch.schmidlins.mealdiary.ui.FeedItem
 import ch.schmidlins.mealdiary.ui.MealViewModel
@@ -35,7 +36,8 @@ class MainActivity : ComponentActivity() {
         val mealRepository = MealRepository(database.mealDao())
         val bmRepository = BMRepository(database.bowelMovementDao())
         val weightRepository = WeightRepository(database.weightEntryDao())
-        val viewModelFactory = MealViewModelFactory(mealRepository, bmRepository, weightRepository)
+        val prefsRepo = UserPreferencesRepository(this)
+        val viewModelFactory = MealViewModelFactory(mealRepository, bmRepository, weightRepository, prefsRepo)
 
         setContent {
             val viewModel: MealViewModel = viewModel(factory = viewModelFactory)
