@@ -6,6 +6,7 @@ import ch.schmidlins.mealdiary.MealDiaryApp
 import ch.schmidlins.mealdiary.data.entities.Meal
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
+import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
 import ch.schmidlins.mealdiary.data.repository.WeightRepository
 import io.mockk.every
 import io.mockk.mockk
@@ -28,8 +29,10 @@ class MealLogTest {
         every { mealRepo.firstMealTimestamp } returns flowOf(null)
         every { bmRepo.allBMs } returns flowOf(emptyList())
         every { bmRepo.lastBMTimestamp } returns flowOf(null)
+        val prefsRepo = mockk<UserPreferencesRepository>(relaxed = true)
+        every { prefsRepo.bmPromptIntervalHours } returns flowOf(24)
         
-        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo)
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
 
         composeTestRule.setContent {
             MealDiaryApp(viewModel)
@@ -57,8 +60,10 @@ class MealLogTest {
         every { mealRepo.firstMealTimestamp } returns flowOf(now - (25 * 60 * 60 * 1000))
         every { bmRepo.allBMs } returns flowOf(emptyList())
         every { bmRepo.lastBMTimestamp } returns flowOf(null)
+        val prefsRepo = mockk<UserPreferencesRepository>(relaxed = true)
+        every { prefsRepo.bmPromptIntervalHours } returns flowOf(24)
         
-        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo)
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
 
         composeTestRule.setContent {
             MealDiaryApp(viewModel)

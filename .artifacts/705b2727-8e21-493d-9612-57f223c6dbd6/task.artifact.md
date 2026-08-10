@@ -1,25 +1,30 @@
-# Task: Milestone 3 Execution
+# Task: Milestone 4 Execution
 
-- [ ] GitHub Infrastructure
-    - [ ] Create Milestone 3 on GitHub
-    - [ ] Create Issue #3 for Milestone 3
-    - [ ] Create branch `feature/m3-widgets-reminders`
-    - [ ] Create Pull Request for Milestone 3
-- [ ] Technical Setup
-    - [ ] Baseline Build (`.\gradlew.bat assembleDebug`)
-    - [ ] Add Glance, WorkManager, and DataStore dependencies
+- [x] GitHub Infrastructure
+    - [x] Create Milestone 4 on GitHub
+    - [x] Create Issue #7 for Milestone 4
+    - [x] Create branch `feature/m4-weight-tracker`
+    - [/] Create Pull Request for Milestone 4
+- [ ] Technical Implementation
+    - [ ] Update `UserPreferencesRepository` with weight flags
+    - [ ] Update `FeedItem` sealed class for Weight
+    - [ ] Implement weight tracking logic in `MealViewModel`
+    - [ ] Implement weight suggestion logic in `MealViewModel`
+    - [ ] Add weight toggle to `SettingsActivity`
+    - [ ] Create Weight Logging UI in `MainActivity`
+    - [ ] Display Weight entries in Unified Feed
 - [ ] Implementation Loop (10 iterations)
-    - [ ] Review loop 1/10: DataStore Preference Repository
-    - [ ] Review loop 2/10: ReminderWorker & Notification logic
-    - [ ] Review loop 3/10: ReminderManager for scheduling
-    - [ ] Review loop 4/10: Glance Widget implementation
-    - [ ] Review loop 5/10: Widget Action handling
-    - [ ] Review loop 6/10: Settings UI components
-    - [ ] Review loop 7/10: Integrating Settings into ViewModel logic
-    - [ ] Review loop 8/10: Unit tests for scheduling & interval logic
-    - [ ] Review loop 9/10: Widget interaction tests
-    - [ ] Review loop 10/10: Final polish, permissions, and cleanup
+    - [ ] Review loop 1/10
+    - [ ] Review loop 2/10
+    - [ ] Review loop 3/10
+    - [ ] Review loop 4/10
+    - [ ] Review loop 5/10
+    - [ ] Review loop 6/10
+    - [ ] Review loop 7/10
+    - [ ] Review loop 8/10
+    - [ ] Review loop 9/10
+    - [ ] Review loop 10/10
 - [ ] Finalization
-    - [ ] Final Build & Acceptance Tests on Device
+    - [ ] Final Build & Verification on Device
     - [ ] Merge PR
     - [ ] Close Issue & Milestone

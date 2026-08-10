@@ -1,34 +1,35 @@
-# Walkthrough - Milestone 2: History & Suppression Logic
+# Walkthrough - Milestone 3: Reminders & Widgets
 
-Milestone 2 introduced the smart logic for bowel movement prompts and a unified chronological history feed.
+Milestone 3 focused on expanding the app's reach beyond the main UI through home screen widgets and personalized reminders.
 
 ## Changes Made
 
-### 1. Smart Suppression & Prompt Logic
-- **24-hour Suppression**: The app now hides the Bowel Movement (BM) prompt for the first 24 hours after the user's very first meal entry to avoid overwhelming new users.
-- **Active Prompting**: After the 24h threshold, the app displays a prominent prompt: *"Have you had a bowel movement in the last 24h?"* if none have been logged recently.
-- **Reactive Timer**: Implemented a background ticker in the ViewModel that updates the "Time since last BM" display every minute without requiring user interaction.
+### 1. Home Screen Widget (Jetpack Glance)
+- Implemented **MealDiaryWidget** using Jetpack Glance.
+- Features quick-action buttons: "Log Meal" and "Log BM".
+- Direct integration with the database for instant logging from the home screen.
 
-### 2. Unified History Feed
-- Refactored the UI to use a single chronological feed using Material 3 `ListItem` components.
-- Distinct visuals for Meals (🍴) and Bowel Movements (💩).
-- Integrated **Delete** functionality for all feed items with confirmation-less removal (keeping it "zero-hurdle").
+### 2. Personalized Reminders (WorkManager)
+- Implemented **ReminderWorker** to trigger system notifications.
+- Created **ReminderManager** to schedule periodic meal reminders (default: 8am, 2pm, 8pm).
+- Integrated **POST_NOTIFICATIONS** permission handling for Android 13+.
 
-### 3. Data & Architecture
-- **Expanded DAOs**: Added queries for earliest meal and latest BM timestamps.
-- **Weight Repository**: Prepared the `WeightRepository` and updated `WeightEntryDao` with `getLastWeightEntryFlow` for future milestones.
-- **Native Logging**: Added native Android logging to the C++ engine to facilitate JNI debugging.
+### 3. Configurable Settings (DataStore)
+- Introduced **UserPreferencesRepository** using Jetpack DataStore for reliable preference storage.
+- Added a **Settings** screen (accessible from the main UI) to:
+    - Adjust the **Bowel Movement Prompt Interval** (12h to 48h).
+    - Enable or disable **Meal Reminders**.
+- ViewModel logic now dynamically respects these user preferences.
 
-### 4. Testing & Quality Assurance
-- **Comprehensive Unit Tests**: Implemented 100% coverage for the `shouldAskAboutBM` suppression logic in `MealViewModelTest`.
-- **Instrumented Interaction Tests**: Added tests to verify the visibility of the BM prompt based on the 24-hour business rule.
-- All 9 unit tests and 3 instrumented tests are passing.
+### 4. Manifest & Quality
+- Properly registered all new components (Activity, Receiver, Permissions) in the `AndroidManifest.xml`.
+- Updated the test suite to cover the new configurable interval logic.
+- Verified that all 9 unit tests and 3 instrumented interaction tests pass on the device.
 
 ## How to Verify
-1.  **Fresh Install**: Log a meal. The BM prompt should **not** appear.
-2.  **History**: Log multiple meals and BMs. They should appear in descending chronological order.
-3.  **Deletion**: Tap the trash icon on any item. It should be removed instantly.
-4.  **Prompt (Simulated)**: Adjust the system clock forward by 25 hours. The app should display the prompt asking about past BMs.
+1.  **Widget**: Long-press on the home screen, find "MealDiary", and add the widget. Tap "Log Meal" and verify it appears in the app history.
+2.  **Settings**: Tap the gear icon in the app. Change the interval to 12h.
+3.  **Reminders**: Use `adb shell am broadcast` or wait for the scheduled time to see the reminder notification.
 
 ## Next Steps
-In Milestone 3, we will add home screen widgets for even faster logging and configurable reminder intervals.
+In Milestone 4, we will introduce the weight tracker and the smart suggestion engine that triggers after 7 days of use.
