@@ -289,8 +289,18 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                                     },
                                     supportingContent = {
                                         if (item.bm.consistency != null) {
+                                            val emoji = when (item.bm.consistency) {
+                                                1 -> "🌰"
+                                                2 -> "🥖"
+                                                3 -> "🌽"
+                                                4 -> "🐍"
+                                                5 -> "☁️"
+                                                6 -> "🥞"
+                                                7 -> "🌊"
+                                                else -> ""
+                                            }
                                             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                                Text("B${item.bm.consistency}", style = MaterialTheme.typography.labelSmall)
+                                                Text("$emoji B${item.bm.consistency}", style = MaterialTheme.typography.labelSmall)
                                                 if ((item.bm.painLevel ?: 0) > 0) {
                                                     Spacer(modifier = Modifier.width(8.dp))
                                                     Text("🔥 ${item.bm.painLevel}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)

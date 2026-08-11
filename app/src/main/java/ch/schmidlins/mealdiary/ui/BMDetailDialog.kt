@@ -23,17 +23,17 @@ fun BMDetailDialog(
         title = { Text("Bowel Movement Details") },
         text = {
             Column {
-                val bristolDescription = when (consistency.toInt()) {
-                    1 -> "Hard lumps (Constipation)"
-                    2 -> "Lumpy sausage"
-                    3 -> "Cracked sausage"
-                    4 -> "Smooth sausage (Ideal)"
-                    5 -> "Soft blobs"
-                    6 -> "Mushy/Fluffy"
-                    7 -> "Watery (Diarrhea)"
-                    else -> ""
+                val bristolInfo = when (consistency.toInt()) {
+                    1 -> Pair("Hard lumps (Constipation)", "🌰")
+                    2 -> Pair("Lumpy sausage", "🥖")
+                    3 -> Pair("Cracked sausage", "🌽")
+                    4 -> Pair("Smooth sausage (Ideal)", "🐍")
+                    5 -> Pair("Soft blobs", "☁️")
+                    6 -> Pair("Mushy/Fluffy", "🥞")
+                    7 -> Pair("Watery (Diarrhea)", "🌊")
+                    else -> Pair("", "")
                 }
-                Text("Consistency: $bristolDescription")
+                Text("Consistency: ${bristolInfo.second} ${bristolInfo.first}")
                 Slider(
                     value = consistency,
                     onValueChange = { consistency = it },
