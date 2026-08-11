@@ -34,6 +34,7 @@ class MealViewModelTest {
     private lateinit var bmRepository: BMRepository
     private lateinit var weightRepository: WeightRepository
     private lateinit var userPreferencesRepository: UserPreferencesRepository
+    private lateinit var analysisEngine: ch.schmidlins.mealdiary.AnalysisEngine
     private lateinit var viewModel: MealViewModel
 
     private val mealsFlow = MutableStateFlow<List<Meal>>(emptyList())
@@ -52,6 +53,7 @@ class MealViewModelTest {
         bmRepository = mockk(relaxed = true)
         weightRepository = mockk(relaxed = true)
         userPreferencesRepository = mockk(relaxed = true)
+        analysisEngine = mockk(relaxed = true)
 
         every { mealRepository.allMeals } returns mealsFlow
         every { bmRepository.allBMs } returns bmsFlow
@@ -62,7 +64,7 @@ class MealViewModelTest {
         every { userPreferencesRepository.isWeightTrackingEnabled } returns isWeightTrackingEnabledFlow
         every { userPreferencesRepository.weightSuggestionDismissed } returns weightSuggestionDismissedFlow
 
-        viewModel = MealViewModel(mealRepository, bmRepository, weightRepository, userPreferencesRepository)
+        viewModel = MealViewModel(mealRepository, bmRepository, weightRepository, userPreferencesRepository, analysisEngine)
     }
 
     @After
@@ -288,5 +290,22 @@ class MealViewModelTest {
         assertEquals(3, topFoods[0].second)
         assertEquals("Pasta", topFoods[1].first)
         assertEquals(2, topFoods[1].second)
+    }
+
+    @Test
+    fun `insights flow calls analysisEngine with correct data`() {
+        val meals = listOf(Meal(1, 1000, "Coffee"))
+        val bms = listOf(BowelMovement(1, 2000))
+        mealsFlow.value = meals
+        bmsFlow.value = bms
+        
+        val expectedInsights = listOf("Coffee might be an accelerator")
+        every { analysisEngine.analyze(meals, bms) } returns expectedInsights
+
+        val observer = mockk<Observer<List<String>>>(relaxed = true)
+        viewModel.insights.observeForever(observer)
+
+        verify { analysisEngine.analyze(meals, bms) }
+        verify { observer.onChanged(expectedInsights) }
     }
 }

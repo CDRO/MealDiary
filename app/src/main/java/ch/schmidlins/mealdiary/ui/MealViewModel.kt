@@ -56,7 +56,8 @@ class MealViewModel(
     private val mealRepository: MealRepository,
     private val bmRepository: BMRepository,
     private val weightRepository: WeightRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val analysisEngine: AnalysisEngine = AnalysisEngine()
 ) : ViewModel() {
 
     val meals: LiveData<List<Meal>> = mealRepository.allMeals.asLiveData()
@@ -172,7 +173,7 @@ class MealViewModel(
         mealRepository.allMeals,
         bmRepository.allBMs
     ) { meals, bms ->
-        AnalysisEngine().analyze(meals, bms)
+        analysisEngine.analyze(meals, bms)
     }.asLiveData()
 
     val todayTimeline: LiveData<List<FeedItem>> = unifiedFeed.asFlow().map { items ->
