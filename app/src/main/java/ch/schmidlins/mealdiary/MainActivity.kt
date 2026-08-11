@@ -571,7 +571,22 @@ fun TimelineComponent(items: List<FeedItem>) {
                 items.forEach { item ->
                     val offset = ((item.timestamp - today).toFloat() / dayMillis).coerceIn(0f, 1f)
                     val color = if (item is FeedItem.MealItem) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-                    val icon = if (item is FeedItem.MealItem) "🍴" else "💩"
+                    val icon = when (item) {
+                        is FeedItem.MealItem -> "🍴"
+                        is FeedItem.BMItem -> {
+                            when (item.bm.consistency) {
+                                1 -> "🌰"
+                                2 -> "🥖"
+                                3 -> "🌽"
+                                4 -> "🐍"
+                                5 -> "☁️"
+                                6 -> "🥞"
+                                7 -> "🌊"
+                                else -> "💩"
+                            }
+                        }
+                        is FeedItem.WeightItem -> "⚖️"
+                    }
                     
                     Box(modifier = Modifier.fillMaxWidth().align(androidx.compose.ui.Alignment.Center)) {
                         Column(
