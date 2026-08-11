@@ -173,6 +173,7 @@ class MealViewModel(
         mealRepository.allMeals,
         bmRepository.allBMs
     ) { meals, bms ->
+        if (meals.size < 5) return@combine emptyList<String>()
         analysisEngine.analyze(meals, bms)
     }.asLiveData()
 
