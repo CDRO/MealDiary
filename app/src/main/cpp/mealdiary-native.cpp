@@ -1,27 +1,19 @@
 #include <jni.h>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <android/log.h>
 
 #define LOG_TAG "MealDiaryNative"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
-struct Meal {
-    std::string description;
-    long long timestamp;
-};
-
-struct BowelMovement {
-    long long timestamp;
-};
-
 extern "C" JNIEXPORT jstring JNICALL
 Java_ch_schmidlins_mealdiary_AnalysisEngine_getPatternResultNative(
         JNIEnv* env,
         jobject /* this */) {
     LOGI("getPatternResult called from JNI");
-    std::string result = "No significant patterns detected yet.";
+    std::string result = "Analyze your entries to see patterns.";
     return env->NewStringUTF(result.c_str());
 }
 
@@ -33,10 +25,48 @@ Java_ch_schmidlins_mealdiary_AnalysisEngine_analyzeCorrelations(
         jlongArray mealTimestamps,
         jlongArray bmTimestamps) {
 
-    // Implementation will follow in the next loop to identify accelerators
-    // For now returning an empty array to verify bridge
+    int mealCount = env->GetArrayLength(mealDescriptions);
+    int bmCount = env->GetArrayLength(bmTimestamps);
+
+    jlong* mTs = env->GetLongArrayElements(mealTimestamps, nullptr);
+    jlong* bTs = env->GetLongArrayElements(bmTimestamps, nullptr);
+
+    std::map<std::string, int> acceleratorScores;
+    const long long fourHours = 4 * 60 * 60 * 1000;
+
+    for (int i = 0; i < mealCount; ++i) {
+        jstring descObj = (jstring)env->GetObjectArrayElement(mealDescriptions, i);
+        const char* descChars = env->GetStringUTFChars(descObj, nullptr);
+        std::string desc(descChars);
+        env->ReleaseStringUTFChars(descObj, descChars);
+
+        long long mTime = mTs[i];
+
+        for (int j = 0; j < bmCount; ++j) {
+            long long bTime = bTs[j];
+            if (bTime > mTime && (bTime - mTime) < fourHours) {
+                acceleratorScores[desc]++;
+                break;
+            }
+        }
+    }
+
+    std::vector<std::string> results;
+    for (auto const& [food, score] : acceleratorScores) {
+        if (score >= 2) { // Threshold for a pattern
+            results.push_back(food + " might be an accelerator");
+        }
+    }
+
+    env->ReleaseLongArrayElements(mealTimestamps, mTs, JNI_ABORT);
+    env->ReleaseLongArrayElements(bmTimestamps, bTs, JNI_ABORT);
+
     jclass stringClass = env->FindClass("java/lang/String");
-    return env->NewObjectArray(0, stringClass, nullptr);
+    jobjectArray ret = env->NewObjectArray(results.size(), stringClass, nullptr);
+    for (size_t i = 0; i < results.size(); ++i) {
+        env->SetObjectArrayElement(ret, i, env->NewStringUTF(results[i].c_str()));
+    }
+    return ret;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

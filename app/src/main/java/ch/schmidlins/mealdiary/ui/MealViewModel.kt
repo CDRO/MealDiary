@@ -1,6 +1,7 @@
 package ch.schmidlins.mealdiary.ui
 
 import androidx.lifecycle.*
+import ch.schmidlins.mealdiary.AnalysisEngine
 import ch.schmidlins.mealdiary.data.entities.BowelMovement
 import ch.schmidlins.mealdiary.data.entities.Meal
 import ch.schmidlins.mealdiary.data.entities.WeightEntry
@@ -165,6 +166,13 @@ class MealViewModel(
             .take(5)
 
         Statistics(avgBM, delta, avgWeight, topFoods, weights.sortedBy { it.timestamp })
+    }.asLiveData()
+
+    val insights: LiveData<List<String>> = combine(
+        mealRepository.allMeals,
+        bmRepository.allBMs
+    ) { meals, bms ->
+        AnalysisEngine().analyze(meals, bms)
     }.asLiveData()
 
     val todayTimeline: LiveData<List<FeedItem>> = unifiedFeed.asFlow().map { items ->
