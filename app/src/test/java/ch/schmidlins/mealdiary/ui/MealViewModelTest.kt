@@ -13,7 +13,6 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Before
@@ -263,5 +262,31 @@ class MealViewModelTest {
         // 2 BMs over 2 days = 1.0 per day
         assertEquals(1.0, stats.avgBMFrequency, 0.1)
         assertEquals(-2.0, stats.weightDelta!!, 0.1)
+        assertEquals(71.0, stats.avgWeight!!, 0.1)
+    }
+
+    @Test
+    fun `statistics correctly identifies top logged foods`() {
+        mealsFlow.value = listOf(
+            Meal(1, 1000, "Pizza"),
+            Meal(2, 2000, "Pizza"),
+            Meal(3, 3000, "Pasta"),
+            Meal(4, 4000, "Salad"),
+            Meal(5, 5000, "Pizza"),
+            Meal(6, 6000, "Pasta")
+        )
+
+        val observer = mockk<Observer<Statistics>>(relaxed = true)
+        viewModel.statistics.observeForever(observer)
+
+        val captured = mutableListOf<Statistics>()
+        verify { observer.onChanged(capture(captured)) }
+        
+        val topFoods = captured.last().topFoods
+        assertEquals(3, topFoods.size)
+        assertEquals("Pizza", topFoods[0].first)
+        assertEquals(3, topFoods[0].second)
+        assertEquals("Pasta", topFoods[1].first)
+        assertEquals(2, topFoods[1].second)
     }
 }

@@ -18,6 +18,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -67,6 +70,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val haptic = LocalHapticFeedback.current
     var mealText by remember { mutableStateOf("") }
     var weightText by remember { mutableStateOf("") }
     val feedItems by viewModel.unifiedFeed.observeAsState(emptyList())
@@ -178,6 +182,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
             Row {
                 Button(onClick = { 
                     if (mealText.isNotBlank()) {
+                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                         viewModel.addMeal(mealText)
                         mealText = ""
                     }
@@ -185,7 +190,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                     Text("Log Meal")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { viewModel.addBowelMovement() }) {
+                Button(onClick = { 
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                    viewModel.addBowelMovement() 
+                }) {
                     Text("Log BM")
                 }
             }
@@ -300,14 +308,30 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
                             Text("Avg. BM Frequency", style = MaterialTheme.typography.labelLarge)
                             BMFrequencyChart(stats.avgBMFrequency)
                             
-                            stats.weightDelta?.let { delta ->
-                                Text("Weight Change: ${if (delta > 0) "+" else ""}${"%.1f".format(delta)} kg")
+                            stats.avgWeight?.let { avg ->
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Weight Summary", style = MaterialTheme.typography.labelLarge)
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Average: %.1f kg".format(avg), style = MaterialTheme.typography.bodySmall)
+                                    stats.weightDelta?.let { delta ->
+                                        Text("Change: ${if (delta > 0) "+" else ""}${"%.1f".format(delta)} kg", 
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (delta < 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
                             }
                             if (stats.topFoods.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text("Top Foods:", style = MaterialTheme.typography.labelLarge)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Top Foods", style = MaterialTheme.typography.labelLarge)
                                 stats.topFoods.forEach { (food, count) ->
-                                    Text("• $food ($count times)", style = MaterialTheme.typography.bodySmall)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(food, style = MaterialTheme.typography.bodySmall)
+                                        Text("$count logs", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                    }
                                 }
                             }
                             
@@ -337,7 +361,9 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
                 ) {
                     ListItem(
                         headlineContent = { Text(summary.date.toString()) },
-                        supportingContent = { Text("🍴 ${summary.mealCount} Meals, 💩 ${summary.bmCount} BMs") },
+                        supportingContent = { 
+                            Text("🍴 ${summary.mealCount} Meals, 💩 ${summary.bmCount} BMs")
+                        },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
                     )
                 }
@@ -350,15 +376,21 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
 fun BMFrequencyChart(frequency: Double) {
     val progress = (frequency / 3.0).coerceIn(0.0, 1.0).toFloat() // Scale 0-3 BMs/day
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier.fillMaxWidth().height(12.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
-        )
+        Box(modifier = Modifier.fillMaxWidth().height(24.dp)) {
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().height(12.dp).align(androidx.compose.ui.Alignment.Center),
+                color = if (frequency >= 1.0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+            )
+            // Goal marker at 1.0/day
+            Box(modifier = Modifier.fillMaxWidth(1f/3f).fillMaxHeight().align(androidx.compose.ui.Alignment.CenterStart)) {
+                Box(modifier = Modifier.width(2.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface).align(androidx.compose.ui.Alignment.CenterEnd))
+            }
+        }
         Text(
-            text = "%.2f BMs per day".format(frequency),
+            text = "%.2f BMs per day (Goal: >1.0)".format(frequency),
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.align(androidx.compose.ui.Alignment.End)
         )

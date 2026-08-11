@@ -26,6 +26,7 @@ data class DailySummary(
 data class Statistics(
     val avgBMFrequency: Double,
     val weightDelta: Double?,
+    val avgWeight: Double?,
     val topFoods: List<Pair<String, Int>>,
     val weightHistory: List<WeightEntry>
 )
@@ -155,13 +156,15 @@ class MealViewModel(
             latest - first
         } else null
 
+        val avgWeight = if (weights.isNotEmpty()) weights.map { it.weight }.average() else null
+
         val topFoods = meals.groupBy { it.description }
             .mapValues { it.value.size }
             .toList()
             .sortedByDescending { it.second }
             .take(5)
 
-        Statistics(avgBM, delta, topFoods, weights.sortedBy { it.timestamp })
+        Statistics(avgBM, delta, avgWeight, topFoods, weights.sortedBy { it.timestamp })
     }.asLiveData()
 
     val todayTimeline: LiveData<List<FeedItem>> = unifiedFeed.asFlow().map { items ->
