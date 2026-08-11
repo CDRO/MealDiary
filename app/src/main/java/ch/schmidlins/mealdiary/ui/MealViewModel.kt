@@ -10,9 +10,7 @@ import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
 import ch.schmidlins.mealdiary.data.repository.WeightRepository
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -259,6 +257,29 @@ class MealViewModel(
         viewModelScope.launch {
             userPreferencesRepository.updateWeightTrackingEnabled(true)
         }
+    }
+
+    suspend fun getCSVData(): String {
+        val meals = mealRepository.allMeals.first()
+        val bms = bmRepository.allBMs.first()
+        val weights = weightRepository.allWeightEntries.first()
+
+        val sb = StringBuilder()
+        sb.append("Timestamp,Type,Value,Notes\n")
+
+        meals.forEach { meal ->
+            sb.append("${meal.timestamp},MEAL,\"${meal.description.replace("\"", "\"\"")}\",\"${(meal.notes ?: "").replace("\"", "\"\"")}\"\n")
+        }
+
+        bms.forEach { bm ->
+            sb.append("${bm.timestamp},BM,,\"${(bm.notes ?: "").replace("\"", "\"\"")}\"\n")
+        }
+
+        weights.forEach { weight ->
+            sb.append("${weight.timestamp},WEIGHT,\"${weight.weight} ${weight.unit}\",\n")
+        }
+
+        return sb.toString()
     }
 }
 
