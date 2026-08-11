@@ -77,6 +77,8 @@ class MealViewModel(
     val bms: LiveData<List<BowelMovement>> = bmRepository.allBMs.asLiveData()
 
     val isWeightTrackingEnabled: LiveData<Boolean> = userPreferencesRepository.isWeightTrackingEnabled.asLiveData()
+    val widgetOrder: LiveData<List<String>> = userPreferencesRepository.widgetOrder.asLiveData()
+    val enabledWidgets: LiveData<Set<String>> = userPreferencesRepository.enabledWidgets.asLiveData()
 
     val shouldShowWeightSuggestion: LiveData<Boolean> = combine(
         userPreferencesRepository.isWeightTrackingEnabled,
@@ -277,6 +279,18 @@ class MealViewModel(
     fun enableWeightTracking() {
         viewModelScope.launch {
             userPreferencesRepository.updateWeightTrackingEnabled(true)
+        }
+    }
+
+    fun updateWidgetOrder(order: List<String>) {
+        viewModelScope.launch {
+            userPreferencesRepository.updateWidgetOrder(order)
+        }
+    }
+
+    fun updateEnabledWidgets(enabled: Set<String>) {
+        viewModelScope.launch {
+            userPreferencesRepository.updateEnabledWidgets(enabled)
         }
     }
 
