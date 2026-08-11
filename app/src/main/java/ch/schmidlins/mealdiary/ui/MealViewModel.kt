@@ -58,6 +58,21 @@ class MealViewModel(
     private val analysisEngine: AnalysisEngine = AnalysisEngine()
 ) : ViewModel() {
 
+    private val _mealInputText = MutableStateFlow("")
+    val mealInputText: StateFlow<String> = _mealInputText
+
+    fun updateMealInputText(text: String) {
+        _mealInputText.value = text
+    }
+
+    val mealSuggestions: LiveData<List<String>> = combine(
+        mealRepository.recurringMealDescriptions,
+        _mealInputText
+    ) { recurring, input ->
+        if (input.isBlank()) emptyList<String>()
+        else recurring.filter { it.contains(input, ignoreCase = true) && it != input }.take(5)
+    }.asLiveData()
+
     val meals: LiveData<List<Meal>> = mealRepository.allMeals.asLiveData()
     val bms: LiveData<List<BowelMovement>> = bmRepository.allBMs.asLiveData()
 
