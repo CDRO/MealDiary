@@ -32,6 +32,7 @@ Java_ch_schmidlins_mealdiary_AnalysisEngine_analyzeCorrelations(
     jlong* bTs = env->GetLongArrayElements(bmTimestamps, nullptr);
 
     std::map<std::string, int> acceleratorScores;
+    std::map<std::string, int> totalCounts;
     const long long fourHours = 4 * 60 * 60 * 1000;
 
     for (int i = 0; i < mealCount; ++i) {
@@ -40,6 +41,7 @@ Java_ch_schmidlins_mealdiary_AnalysisEngine_analyzeCorrelations(
         std::string desc(descChars);
         env->ReleaseStringUTFChars(descObj, descChars);
 
+        totalCounts[desc]++;
         long long mTime = mTs[i];
 
         for (int j = 0; j < bmCount; ++j) {
@@ -52,9 +54,12 @@ Java_ch_schmidlins_mealdiary_AnalysisEngine_analyzeCorrelations(
     }
 
     std::vector<std::string> results;
-    for (auto const& [food, score] : acceleratorScores) {
-        if (score >= 2) { // Threshold for a pattern
+    for (auto const& [food, total] : totalCounts) {
+        int accCount = acceleratorScores[food];
+        if (total >= 3 && accCount >= 2) {
             results.push_back(food + " might be an accelerator");
+        } else if (total >= 5 && accCount == 0) {
+            results.push_back(food + " might be a decelerator");
         }
     }
 
