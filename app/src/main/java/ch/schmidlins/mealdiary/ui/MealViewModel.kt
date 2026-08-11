@@ -246,6 +246,12 @@ class MealViewModel(
         }
     }
 
+    fun updateBM(bm: BowelMovement) {
+        viewModelScope.launch {
+            bmRepository.insertBM(bm) // Room @Insert(onConflict = REPLACE) handles update
+        }
+    }
+
     fun deleteWeight(entry: WeightEntry) {
         viewModelScope.launch {
             weightRepository.deleteWeight(entry)

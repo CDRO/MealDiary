@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ch.schmidlins.mealdiary.DataOverviewScreen
 import ch.schmidlins.mealdiary.MealDiaryApp
+import ch.schmidlins.mealdiary.data.entities.BowelMovement
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
@@ -164,5 +165,30 @@ class MealLogTest {
 
         // Insights should be empty by default with empty repo
         composeTestRule.onNodeWithText("Smart Insights").assertDoesNotExist()
+    }
+
+    @Test
+    fun testBMDetailDialogSaves() {
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
+        val bm = BowelMovement(id = 1, timestamp = 1000)
+        
+        var savedBM: BowelMovement? = null
+
+        composeTestRule.setContent {
+            BMDetailDialog(
+                bm = bm,
+                onDismiss = {},
+                onSave = { savedBM = it }
+            )
+        }
+
+        // Verify elements exist
+        composeTestRule.onNodeWithText("Bowel Movement Details").assertIsDisplayed()
+        
+        // Tap Save
+        composeTestRule.onNodeWithText("Save").performClick()
+
+        // Verify savedBM was updated (consistency 4 is default in dialog)
+        assert(savedBM?.consistency == 4)
     }
 }

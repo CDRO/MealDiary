@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
@@ -84,6 +86,19 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val analysisEngine = remember { AnalysisEngine() }
     val patternResult = remember { analysisEngine.getPatternResult() }
     val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    var selectedBMForDetail by remember { mutableStateOf<ch.schmidlins.mealdiary.data.entities.BowelMovement?>(null) }
+
+    if (selectedBMForDetail != null) {
+        ch.schmidlins.mealdiary.ui.BMDetailDialog(
+            bm = selectedBMForDetail!!,
+            onDismiss = { selectedBMForDetail = null },
+            onSave = { 
+                viewModel.updateBM(it)
+                selectedBMForDetail = null
+            }
+        )
+    }
 
     Scaffold(
         topBar = { 
@@ -222,6 +237,12 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                 }) {
                     Text("Log BM")
                 }
+                IconButton(onClick = {
+                    val newBM = ch.schmidlins.mealdiary.data.entities.BowelMovement(timestamp = System.currentTimeMillis())
+                    selectedBMForDetail = newBM
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "Log BM with details")
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {
@@ -263,9 +284,17 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                             }
                             is FeedItem.BMItem -> {
                                 ListItem(
-                                    headlineContent = { Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) },
+                                    headlineContent = { 
+                                        Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) 
+                                    },
+                                    supportingContent = {
+                                        if (item.bm.consistency != null) {
+                                            Text("Bristol: ${item.bm.consistency}, Pain: ${item.bm.painLevel}/10")
+                                        }
+                                    },
                                     leadingContent = { Text("💩") },
-                                    trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                                    trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) },
+                                    modifier = Modifier.clickable { selectedBMForDetail = item.bm }
                                 )
                             }
                             is FeedItem.WeightItem -> {
