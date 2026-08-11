@@ -337,7 +337,7 @@ class MealViewModelTest {
         assertEquals("Timestamp,Type,Value,Notes", lines[0])
         // Verify escaping of quotes
         assert(lines.contains("1000,MEAL,\"Pizza with \"\"Extra\"\" Cheese\",\"Yummy, delicious\""))
-        assert(lines.contains("2000,BM,,\"\""))
+        assert(lines.contains("2000,BM,\"\",\"\""))
         assert(lines.contains("3000,WEIGHT,\"75.0 kg\",\"\""))
     }
 }
