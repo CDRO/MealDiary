@@ -105,7 +105,8 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                 Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.height(8.dp))
             }
-            if (shouldAskBM) {
+            
+            androidx.compose.animation.AnimatedVisibility(visible = shouldAskBM) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -113,7 +114,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Have you had a bowel movement in the last 24h?", style = MaterialTheme.typography.bodyLarge)
                         Button(
-                            onClick = { viewModel.addBowelMovement() },
+                            onClick = { 
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                viewModel.addBowelMovement() 
+                            },
                             modifier = Modifier.padding(top = 8.dp)
                         ) {
                             Text("Yes, Log now")
@@ -122,7 +126,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                 }
             }
 
-            if (shouldShowWeightSuggestion) {
+            androidx.compose.animation.AnimatedVisibility(visible = shouldShowWeightSuggestion) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
@@ -130,7 +134,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("You've been using MealDiary for a week! Would you like to track your weight as well?", style = MaterialTheme.typography.bodyLarge)
                         Row(modifier = Modifier.padding(top = 8.dp)) {
-                            Button(onClick = { viewModel.enableWeightTracking() }) {
+                            Button(onClick = { 
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                viewModel.enableWeightTracking() 
+                            }) {
                                 Text("Yes, Enable")
                             }
                             Spacer(modifier = Modifier.width(8.dp))
@@ -142,7 +149,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                 }
             }
 
-            if (isWeightTrackingEnabled) {
+            androidx.compose.animation.AnimatedVisibility(visible = isWeightTrackingEnabled) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -162,6 +169,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(onClick = {
                             weightText.toDoubleOrNull()?.let {
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                                 viewModel.addWeightEntry(it)
                                 weightText = ""
                             }
@@ -209,7 +217,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                                 trailingContent = {
                                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                                         Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { viewModel.deleteMeal(item.meal) }) {
+                                        IconButton(onClick = { 
+                                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                            viewModel.deleteMeal(item.meal) 
+                                        }) {
                                             Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                                         }
                                     }
@@ -223,7 +234,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                                 trailingContent = {
                                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                                         Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { viewModel.deleteBM(item.bm) }) {
+                                        IconButton(onClick = { 
+                                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                            viewModel.deleteBM(item.bm) 
+                                        }) {
                                             Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                                         }
                                     }
@@ -237,7 +251,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                                 trailingContent = {
                                     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                                         Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { viewModel.deleteWeight(item.weightEntry) }) {
+                                        IconButton(onClick = { 
+                                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                            viewModel.deleteWeight(item.weightEntry) 
+                                        }) {
                                             Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                                         }
                                     }
