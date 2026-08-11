@@ -1,52 +1,52 @@
-# Implementation Plan - Test Optimization & Milestone 6: Advanced Statistics
+# Implementation Plan - Milestone 8: CSV Data Export
 
-This plan aims to significantly speed up the test suite and implement quantitative data insights.
+This plan outlines the implementation of a data export feature, allowing users to save their diary entries as a CSV file using the Storage Access Framework (SAF).
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Test Speed**: I am proposing to migrate instrumented UI tests (on-device) to JVM-based tests using **Robolectric**. This will allow interaction tests to run on the host machine, reducing execution time from minutes to seconds.
-> **Visual Statistics**: We will add a "Statistics" section to the Overview screen featuring charts for weight trends and frequency analysis.
+> **Export Format**: We will provide a single CSV file containing all entries (Meals, Bowel Movements, and Weight) with a "Type" column to distinguish them, or separate files? I am proposing a **single unified CSV** for simplicity, with columns: `Timestamp`, `Type`, `Description/Weight`, `Notes`.
 
 ## Proposed Changes
 
-### 1. Test Optimization
+### 1. Data Layer
 
-#### [MODIFY] [libs.versions.toml](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/gradle/libs.versions.toml)
-- Add `robolectric` version and library.
+#### [MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)
+- Add a function to generate a CSV string from all existing database entries.
+- Format: `Date,Time,Type,Value,Notes`
 
-#### [MODIFY] [app/build.gradle.kts](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/build.gradle.kts)
-- Add `testImplementation(libs.robolectric)`.
-- Enable `includeAndroidResources = true` in `testOptions`.
+### 2. UI Layer
 
-#### [MOVE] [MealLogTest.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/androidTest/java/ch/schmidlins/mealdiary/ui/MealLogTest.kt) to `app/src/test/java/ch/schmidlins/mealdiary/ui/MealLogTest.kt`
-- Update to run with `@RunWith(RobolectricTestRunner::class)`.
-- This converts the on-device interaction test into a high-speed JVM test.
+#### [MODIFY] [SettingsActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/settings/SettingsActivity.kt)
+- Add an **"Export Data to CSV"** button.
+- Integrate `ActivityResultContracts.CreateDocument` to allow the user to choose a save location.
+- Handle writing the CSV string to the selected URI using a `ContentResolver`.
 
----
-
-### 2. Milestone 6: Advanced Statistics
-
-#### Data Layer
-- **[MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)**:
-    - Implement logic to calculate:
-        - Average BM frequency (BMs per day over last 7/30 days).
-        - Weight delta (difference between latest and first entry).
-        - Top 5 most frequent meal descriptions.
-
-#### UI Layer
-- **[MODIFY] [MainActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/MainActivity.kt)**:
-    - Add a "Statistics" tab or section to `DataOverviewScreen`.
-    - Implement a **Weight Trend Chart** using Compose `Canvas`.
-    - Implement a **BM Distribution** bar chart.
+### 3. CSV Generation Logic
+- **Meals**: `timestamp, MEAL, description, notes`
+- **BMs**: `timestamp, BM, , notes`
+- **Weight**: `timestamp, WEIGHT, weight value, unit`
 
 ## Verification Plan
 
 ### Automated Tests
-- **JVM UI Tests**: Run the migrated `MealLogTest` on the host machine.
-- **Unit Tests**: Verify the math behind BM frequency and weight trends in `MealViewModelTest`.
+- **Unit Tests**:
+    - Verify the CSV string generation logic handles empty lists.
+    - Verify correct escaping of commas in meal descriptions (if any).
+- **Robolectric Tests**:
+    - Verify that clicking the export button triggers the file picker intent.
 
 ### Manual Verification
 - Deploy to emulator.
-- Navigate to Overview and verify that the new charts represent the logged data accurately.
-- Verify that tests now run significantly faster via `.\gradlew.bat test`.
+- Log several entries of each type.
+- Go to Settings -> Export Data.
+- Select a location (e.g., Downloads).
+- Open the resulting file on the computer or device and verify the data matches.
+
+---
+
+# Master Plan Update
+
+I will also update `MASTER_PLAN.md` to reflect the new milestone sequence:
+- **Milestone 8**: Data Export (CSV)
+- **Milestone 9**: Final Polish

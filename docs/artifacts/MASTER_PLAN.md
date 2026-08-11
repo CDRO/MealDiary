@@ -23,14 +23,17 @@ A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, wei
 ### Milestone 6: Advanced Statistics (Completed)
 - **Objective**: Extract quantitative insights from the logged data.
 
-### Milestone 7: Heuristic Analysis (C++ Native)
+### Milestone 7: Heuristic Analysis (C++ Native) (Completed)
 - **Objective**: Data-driven insights.
-- **Tasks**:
-    - Native C++ correlation engine.
-    - Pattern matching (Food vs. BM timing).
-    - Insight UI.
 
-### Milestone 8: Final Polish
+### Milestone 8: Data Export (CSV)
+- **Objective**: Portability and backup of user data.
+- **Tasks**:
+    - Implement unified CSV generation logic.
+    - Integrate Storage Access Framework for file saving.
+    - Add Export UI to Settings.
+
+### Milestone 9: Final Polish
 - **Objective**: Quality assurance and UX refinement.
 - **Tasks**:
     - Haptics, animations.

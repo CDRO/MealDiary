@@ -1,20 +1,18 @@
-# Task: Test Optimization & Milestone 6 Execution
+# Task: Milestone 8 & 9 Execution
 
-- [/] Test Optimization
-    - [ ] Add Robolectric to dependencies
-    - [ ] Configure `testOptions` in `build.gradle.kts`
-    - [ ] Migrate `MealLogTest` from `androidTest` to `test` (JVM)
-    - [ ] Verify test speed improvement
-- [ ] Milestone 6: Advanced Statistics
-    - [ ] GitHub Infrastructure (Issue, PR, Milestone check)
-    - [ ] Implement stats logic in `MealViewModel` (BM frequency, Weight delta)
-    - [ ] Implement "Top Foods" grouping logic
-    - [ ] Build **Weight Trend Chart** (Compose Canvas)
-    - [ ] Build **BM Frequency Chart**
-    - [ ] Integrate stats into `DataOverviewScreen`
-    - [ ] Write Unit tests for statistics math
-    - [ ] Final 10-iteration review loop
+- [x] Milestone 8: Data Export (CSV)
+    - [x] GitHub Infrastructure (Milestone, Issue, PR)
+    - [x] Implement CSV string generation logic in `MealViewModel`
+    - [x] Add "Export Data" button to `SettingsActivity`
+    - [x] Integrate `ActivityResultContracts.CreateDocument` for file saving
+    - [x] Write unit tests for CSV formatting
+    - [x] Final 10-iteration review loop
+- [/] Milestone 9: Final Polish
+    - [ ] GitHub Infrastructure
+    - [ ] Implement haptic feedback on log actions (if not done)
+    - [ ] Refine animations (transitions between screens)
+    - [ ] Run full regression test suite (Unit & Robolectric)
+    - [ ] Final deployment and manual UX verification
 - [ ] Finalization
-    - [ ] Final Build & Verification
-    - [ ] Merge PR
-    - [ ] Close Issue & Milestone
+    - [/] Merge PRs
+    - [ ] Close all Issues & Milestones
