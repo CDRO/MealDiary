@@ -23,6 +23,13 @@ data class DailySummary(
     val bmCount: Int
 )
 
+data class Statistics(
+    val avgBMFrequency: Double,
+    val weightDelta: Double?,
+    val topFoods: List<Pair<String, Int>>,
+    val weightHistory: List<WeightEntry>
+)
+
 sealed class FeedItem {
     abstract val id: Long
     abstract val timestamp: Long
@@ -128,6 +135,34 @@ class MealViewModel(
             bmCount = last7Days.sumOf { it.bmCount }
         )
     }
+
+    val statistics: LiveData<Statistics> = combine(
+        mealRepository.allMeals,
+        bmRepository.allBMs,
+        weightRepository.allWeightEntries
+    ) { meals, bms, weights ->
+        val totalDays: Double = if (meals.isEmpty()) 1.0 else {
+            val firstMeal = meals.minOf { it.timestamp }
+            val diff = System.currentTimeMillis() - firstMeal
+            (diff / (24 * 60 * 60 * 1000L)).coerceAtLeast(1).toDouble()
+        }
+
+        val avgBM = bms.size.toDouble() / totalDays
+        
+        val delta = if (weights.size >= 2) {
+            val latest = weights.first().weight
+            val first = weights.last().weight
+            latest - first
+        } else null
+
+        val topFoods = meals.groupBy { it.description }
+            .mapValues { it.value.size }
+            .toList()
+            .sortedByDescending { it.second }
+            .take(5)
+
+        Statistics(avgBM, delta, topFoods, weights.sortedBy { it.timestamp })
+    }.asLiveData()
 
     val todayTimeline: LiveData<List<FeedItem>> = unifiedFeed.asFlow().map { items ->
         val today = LocalDate.now()

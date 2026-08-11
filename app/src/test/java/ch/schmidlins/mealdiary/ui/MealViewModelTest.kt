@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import ch.schmidlins.mealdiary.data.entities.BowelMovement
 import ch.schmidlins.mealdiary.data.entities.Meal
+import ch.schmidlins.mealdiary.data.entities.WeightEntry
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
@@ -18,6 +19,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertEquals
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -37,6 +39,7 @@ class MealViewModelTest {
 
     private val mealsFlow = MutableStateFlow<List<Meal>>(emptyList())
     private val bmsFlow = MutableStateFlow<List<BowelMovement>>(emptyList())
+    private val weightsFlow = MutableStateFlow<List<WeightEntry>>(emptyList())
     private val firstMealTimestampFlow = MutableStateFlow<Long?>(null)
     private val lastBMTimestampFlow = MutableStateFlow<Long?>(null)
     private val bmIntervalFlow = MutableStateFlow(24)
@@ -53,7 +56,7 @@ class MealViewModelTest {
 
         every { mealRepository.allMeals } returns mealsFlow
         every { bmRepository.allBMs } returns bmsFlow
-        every { weightRepository.allWeightEntries } returns flowOf(emptyList())
+        every { weightRepository.allWeightEntries } returns weightsFlow
         every { mealRepository.firstMealTimestamp } returns firstMealTimestampFlow
         every { bmRepository.lastBMTimestamp } returns lastBMTimestampFlow
         every { userPreferencesRepository.bmPromptIntervalHours } returns bmIntervalFlow
@@ -115,7 +118,7 @@ class MealViewModelTest {
         
         val todayItems = captured.last()
         assert(todayItems.all { 
-            java.time.Instant.ofEpochMilli(it.timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDate() == today 
+            java.time.Instant.ofEpochMilli(it.timestamp).atZone(ZoneId.systemDefault()).toLocalDate() == today 
         })
         assert(todayItems.size == 1)
     }
@@ -231,5 +234,34 @@ class MealViewModelTest {
         viewModel.shouldShowWeightSuggestion.observeForever(observer)
 
         verify { observer.onChanged(false) }
+    }
+
+    @Test
+    fun `statistics correctly calculates avg BM frequency and weight delta`() {
+        val now = System.currentTimeMillis()
+        val twoDaysAgo = now - (2 * 24 * 60 * 60 * 1000L)
+        
+        mealsFlow.value = listOf(Meal(1, twoDaysAgo, "First Meal"))
+        bmsFlow.value = listOf(
+            BowelMovement(1, now),
+            BowelMovement(2, now - 1000)
+        )
+        
+        val weights = listOf(
+            WeightEntry(1, now, 70.0),
+            WeightEntry(2, twoDaysAgo, 72.0)
+        )
+        weightsFlow.value = weights
+
+        val observer = mockk<Observer<Statistics>>(relaxed = true)
+        viewModel.statistics.observeForever(observer)
+
+        val captured = mutableListOf<Statistics>()
+        verify { observer.onChanged(capture(captured)) }
+        
+        val stats = captured.last()
+        // 2 BMs over 2 days = 1.0 per day
+        assertEquals(1.0, stats.avgBMFrequency, 0.1)
+        assertEquals(-2.0, stats.weightDelta!!, 0.1)
     }
 }

@@ -124,7 +124,8 @@ class MealLogTest {
         composeTestRule.onNodeWithContentDescription("Overview").performClick()
 
         // Verify Overview screen is shown
-        composeTestRule.onNodeWithText("Daily History").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Overview").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Today's Timeline").assertIsDisplayed()
         
         // Click Back
         composeTestRule.onNodeWithContentDescription("Back").performClick()

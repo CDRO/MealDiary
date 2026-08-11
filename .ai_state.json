@@ -11,8 +11,8 @@
   "current_state": {
     "active_milestone_file": "docs/artifacts/milestones/m6_advanced_statistics/implementation_plan.md",
     "current_step": "Review & Repair Loop",
-    "loop_iteration": 1,
-    "last_action_completed": "Optimized test suite with Robolectric and fixed JNI for JVM tests",
-    "next_immediate_action": "Implement statistics logic in MealViewModel"
+    "loop_iteration": 2,
+    "last_action_completed": "Fixed unit tests and verified BM frequency math",
+    "next_immediate_action": "Add BMFrequencyChart component and polish Statistics UI"
   }
 }
