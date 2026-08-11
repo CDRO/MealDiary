@@ -298,7 +298,8 @@ class MealViewModel(
         }
 
         bms.forEach { bm ->
-            sb.append("${bm.timestamp},BM,,${escape(bm.notes)}\n")
+            val extInfo = if (bm.consistency != null) "Bristol: ${bm.consistency}; Pain: ${bm.painLevel}; Duration: ${bm.durationMinutes}m" else ""
+            sb.append("${bm.timestamp},BM,${escape(extInfo)},${escape(bm.notes)}\n")
         }
 
         weights.forEach { weight ->
