@@ -22,6 +22,7 @@ class MealRepositoryTest {
         mealDao = mockk()
         every { mealDao.getAllMealsFlow() } returns flowOf(emptyList())
         every { mealDao.getFirstMealTimestampFlow() } returns flowOf(null)
+        every { mealDao.getRecurringMealDescriptionsFlow() } returns flowOf(emptyList())
         repository = MealRepository(mealDao)
     }
 
@@ -31,6 +32,7 @@ class MealRepositoryTest {
         val mockDao = mockk<MealDao>()
         every { mockDao.getAllMealsFlow() } returns flowOf(meals)
         every { mockDao.getFirstMealTimestampFlow() } returns flowOf(null)
+        every { mockDao.getRecurringMealDescriptionsFlow() } returns flowOf(emptyList())
         val repo = MealRepository(mockDao)
 
         val result = repo.allMeals

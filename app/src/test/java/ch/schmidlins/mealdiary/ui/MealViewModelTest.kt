@@ -316,6 +316,16 @@ class MealViewModelTest {
     }
 
     @Test
+    fun `updateBM calls repository insert`() = runTest {
+        val bm = BowelMovement(1, 1000, consistency = 4)
+        coEvery { bmRepository.insertBM(bm) } returns Unit
+
+        viewModel.updateBM(bm)
+
+        coVerify { bmRepository.insertBM(bm) }
+    }
+
+    @Test
     fun `getCSVData generates correctly formatted string with escaping`() = runTest {
         mealsFlow.value = listOf(Meal(1, 1000, "Pizza with \"Extra\" Cheese", notes = "Yummy, delicious"))
         bmsFlow.value = listOf(BowelMovement(1, 2000))
@@ -327,7 +337,7 @@ class MealViewModelTest {
         assertEquals("Timestamp,Type,Value,Notes", lines[0])
         // Verify escaping of quotes
         assert(lines.contains("1000,MEAL,\"Pizza with \"\"Extra\"\" Cheese\",\"Yummy, delicious\""))
-        assert(lines.contains("2000,BM,,\"\""))
+        assert(lines.contains("2000,BM,\"\",\"\""))
         assert(lines.contains("3000,WEIGHT,\"75.0 kg\",\"\""))
     }
 }

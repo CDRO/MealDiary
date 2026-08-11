@@ -36,12 +36,8 @@ A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, wei
     - Implement autocomplete/suggestions in the meal entry field.
     - Optimize suggestion speed.
 
-### Milestone 10: Extensive BM Logging
+### Milestone 10: Extensive BM Logging (Completed)
 - **Objective**: Capture detailed gastrointestinal health data.
-- **Tasks**:
-    - Implement "Extensive Mode" for BM entries.
-    - Track consistency (Bristol scale), pain levels, time taken, and other factors.
-    - Allow adding details during log or editing afterwards.
 
 ### Milestone 11: In-App Widget Dashboard
 - **Objective**: Create a customizable, swipeable overview pane.
