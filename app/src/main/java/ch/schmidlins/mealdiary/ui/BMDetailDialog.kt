@@ -12,7 +12,8 @@ import ch.schmidlins.mealdiary.data.entities.BowelMovement
 fun BMDetailDialog(
     bm: BowelMovement,
     onDismiss: () -> Unit,
-    onSave: (BowelMovement) -> Unit
+    onSave: (BowelMovement) -> Unit,
+    onDelete: (BowelMovement) -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     var consistency by remember { mutableStateOf((bm.consistency ?: 4).toFloat()) }
@@ -92,8 +93,18 @@ fun BMDetailDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+            Row {
+                if (bm.id > 0) {
+                    TextButton(onClick = {
+                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                        onDelete(bm)
+                    }) {
+                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
             }
         }
     )

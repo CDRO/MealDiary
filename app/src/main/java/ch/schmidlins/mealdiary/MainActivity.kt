@@ -96,6 +96,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
             onSave = { 
                 viewModel.updateBM(it)
                 selectedBMForDetail = null
+            },
+            onDelete = {
+                viewModel.deleteBM(it)
+                selectedBMForDetail = null
             }
         )
     }
