@@ -206,4 +206,31 @@ class MealLogTest {
         // Verify dialog is shown
         composeTestRule.onNodeWithText("Bowel Movement Details").assertIsDisplayed()
     }
+
+    @Test
+    fun testPagerNavigationToDashboard() {
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
+
+        composeTestRule.setContent {
+            MealDiaryApp(viewModel, onNavigateToOverview = {})
+        }
+
+        // Initially on Feed
+        composeTestRule.onNodeWithText("What did you eat?").assertIsDisplayed()
+
+        // Swipe left to go to Dashboard (page 1)
+        composeTestRule.onRoot().performTouchInput {
+            swipeLeft()
+        }
+
+        // Verify Dashboard is shown
+        composeTestRule.onNodeWithText("Your Dashboard").assertIsDisplayed()
+        
+        // Swipe right to go back to Feed
+        composeTestRule.onRoot().performTouchInput {
+            swipeRight()
+        }
+        
+        composeTestRule.onNodeWithText("What did you eat?").assertIsDisplayed()
+    }
 }

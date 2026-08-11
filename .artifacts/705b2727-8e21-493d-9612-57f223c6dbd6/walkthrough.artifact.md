@@ -1,31 +1,39 @@
-# Walkthrough - Milestone 8: Data Export (CSV)
+# Walkthrough - Milestone 10: Extensive BM Logging
 
-Milestone 8 added a critical data portability feature, allowing users to export their entire history of meals, bowel movements, and weight entries to a CSV file.
+Milestone 10 introduced "Extensive Mode" for bowel movements, allowing users to track clinical health data like consistency (Bristol Scale), pain levels, and duration.
 
 ## Changes Made
 
-### 1. Unified CSV Generation
-- Implemented `getCSVData()` in `MealViewModel`.
-- Aggregates data from `Meal`, `BowelMovement`, and `WeightEntry` repositories.
-- Format: `Timestamp, Type, Value, Notes`.
-- Robust escaping for descriptions and notes containing quotes or commas.
+### 1. Enhanced Data Model & Migration
+- Updated `BowelMovement` entity to include `consistency`, `painLevel`, and `durationMinutes`.
+- Implemented **Room Database Migration (v1 -> v2)** to safely add the new columns without data loss.
 
-### 2. Export UI & Storage Integration
-- Added an **"Export Data to CSV"** button in the Settings screen.
-- Integrated **Storage Access Framework (SAF)** via `ActivityResultContracts.CreateDocument`.
-- The app allows users to choose the save location (Downloads, Cloud storage, etc.) and handles the asynchronous file writing on a background thread (`Dispatchers.IO`).
+### 2. Extensive Logging UI
+- Created `BMDetailDialog` featuring:
+    - **Bristol Stool Scale**: Numeric selection with descriptive text (e.g., "Smooth sausage (Ideal)") and emojis (🌰, 🥖, 🐍, etc.).
+    - **Pain Level**: 0-10 scale with descriptive labels (None, Mild, Moderate, Severe, Unbearable).
+    - **Duration**: Tracking time taken (1-60 mins).
+    - **Notes**: Support for per-entry clinical notes.
+- Added an **"Add Details" icon** next to the quick "Log BM" button.
+- Made existing BM feed items clickable to open the detail editor.
 
-### 3. High-Speed Quality Assurance
-- **Unit Tests**: Added tests in `MealViewModelTest` to verify that the CSV string is generated with correct headers and escaped values.
-- **Robolectric Tests**: Added `SettingsActivityTest` to verify the "Export" button is present and functional in the UI.
-- All 26 unit and interaction tests are passing in seconds on the JVM.
+### 3. Visual Feedback
+- Updated feed items to show rich info icons: e.g., "🐍 B4  🔥 3  ⏱️ 5m".
+- Integrated Bristol emojis into the **Timeline Component** for a quick visual health overview.
+- Added **haptic feedback** to the "Save" and "Delete" actions within the detail dialog.
+
+### 4. Quality Assurance
+- Added unit tests in `MealViewModelTest` for the update logic.
+- Added Robolectric tests in `MealLogTest` to verify that the detail dialog opens and saves correctly.
+- Verified that all 29 tests pass on the JVM.
 
 ## How to Verify
-1.  Launch the app and log some data (Meal, BM, Weight).
-2.  Go to **Settings** (Gear icon in top bar).
-3.  Tap **Export Data to CSV**.
-4.  The system file picker will appear. Select a location and tap **Save**.
-5.  Open the file in a spreadsheet app or text editor to see your data.
+1.  Launch the app.
+2.  Tap the **+** icon next to the "Log BM" button.
+3.  Adjust the Bristol scale and pain level sliders.
+4.  Tap **Save**.
+5.  Observe the new entry in the feed with the descriptive emoji and stats.
+6.  Tap any BM in the history to edit its details.
 
 ## Next Steps
-In the final milestone (**Milestone 9: Final Polish**), we will refine the transitions, add haptic feedback to all logging actions, and perform a final verification run.
+In Milestone 11, we will implement the **In-App Widget Dashboard**, allowing for a swipeable, customizable overview pane.
