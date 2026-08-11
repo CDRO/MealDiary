@@ -267,16 +267,21 @@ class MealViewModel(
         val sb = StringBuilder()
         sb.append("Timestamp,Type,Value,Notes\n")
 
+        val escape = { s: String? ->
+            if (s == null) "\"\""
+            else "\"${s.replace("\"", "\"\"")}\""
+        }
+
         meals.forEach { meal ->
-            sb.append("${meal.timestamp},MEAL,\"${meal.description.replace("\"", "\"\"")}\",\"${(meal.notes ?: "").replace("\"", "\"\"")}\"\n")
+            sb.append("${meal.timestamp},MEAL,${escape(meal.description)},${escape(meal.notes)}\n")
         }
 
         bms.forEach { bm ->
-            sb.append("${bm.timestamp},BM,,\"${(bm.notes ?: "").replace("\"", "\"\"")}\"\n")
+            sb.append("${bm.timestamp},BM,,${escape(bm.notes)}\n")
         }
 
         weights.forEach { weight ->
-            sb.append("${weight.timestamp},WEIGHT,\"${weight.weight} ${weight.unit}\",\"\"\n")
+            sb.append("${weight.timestamp},WEIGHT,${escape("${weight.weight} ${weight.unit}")},\"\"\n")
         }
 
         return sb.toString()

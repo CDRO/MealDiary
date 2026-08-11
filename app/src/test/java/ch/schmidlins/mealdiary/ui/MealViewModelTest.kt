@@ -316,8 +316,8 @@ class MealViewModelTest {
     }
 
     @Test
-    fun `getCSVData generates correctly formatted string`() = runTest {
-        mealsFlow.value = listOf(Meal(1, 1000, "Pizza", notes = "Yummy"))
+    fun `getCSVData generates correctly formatted string with escaping`() = runTest {
+        mealsFlow.value = listOf(Meal(1, 1000, "Pizza with \"Extra\" Cheese", notes = "Yummy, delicious"))
         bmsFlow.value = listOf(BowelMovement(1, 2000))
         weightsFlow.value = listOf(WeightEntry(1, 3000, 75.0))
 
@@ -325,7 +325,8 @@ class MealViewModelTest {
         
         val lines = csv.split("\n")
         assertEquals("Timestamp,Type,Value,Notes", lines[0])
-        assert(lines.contains("1000,MEAL,\"Pizza\",\"Yummy\""))
+        // Verify escaping of quotes
+        assert(lines.contains("1000,MEAL,\"Pizza with \"\"Extra\"\" Cheese\",\"Yummy, delicious\""))
         assert(lines.contains("2000,BM,,\"\""))
         assert(lines.contains("3000,WEIGHT,\"75.0 kg\",\"\""))
     }
