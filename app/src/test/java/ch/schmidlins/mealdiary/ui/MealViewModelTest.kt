@@ -294,7 +294,13 @@ class MealViewModelTest {
 
     @Test
     fun `insights flow calls analysisEngine with correct data`() {
-        val meals = listOf(Meal(1, 1000, "Coffee"))
+        val meals = listOf(
+            Meal(1, 1000, "Coffee"),
+            Meal(2, 1100, "Coffee"),
+            Meal(3, 1200, "Coffee"),
+            Meal(4, 1300, "Coffee"),
+            Meal(5, 1400, "Coffee")
+        )
         val bms = listOf(BowelMovement(1, 2000))
         mealsFlow.value = meals
         bmsFlow.value = bms
