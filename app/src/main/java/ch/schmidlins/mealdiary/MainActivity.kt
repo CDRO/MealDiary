@@ -258,6 +258,7 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
     val todayItems by viewModel.todayTimeline.observeAsState(emptyList())
     val weeklySummary by viewModel.weeklySummary.observeAsState()
     val statistics by viewModel.statistics.observeAsState()
+    val insights by viewModel.insights.observeAsState(emptyList())
 
     Scaffold(
         topBar = {
@@ -297,6 +298,25 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 TimelineComponent(todayItems)
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            item {
+                if (insights.isNotEmpty()) {
+                    Text("Smart Insights", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            insights.forEach { insight ->
+                                Text("✨ $insight", style = MaterialTheme.typography.bodyMedium)
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
 
             item {

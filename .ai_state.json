@@ -11,8 +11,8 @@
   "current_state": {
     "active_milestone_file": "docs/artifacts/milestones/m7_heuristic_analysis/implementation_plan.md",
     "current_step": "Review & Repair Loop",
-    "loop_iteration": 3,
-    "last_action_completed": "Extended JNI bridge to pass list of meals and BMs",
-    "next_immediate_action": "Implement scoring logic in C++ to identify accelerators"
+    "loop_iteration": 4,
+    "last_action_completed": "Implemented C++ correlation logic and exposed insights in ViewModel",
+    "next_immediate_action": "Add Insights UI section to DataOverviewScreen"
   }
 }
