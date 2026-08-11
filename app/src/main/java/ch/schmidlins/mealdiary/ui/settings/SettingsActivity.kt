@@ -101,6 +101,8 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            Text("Data Management", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = { exportLauncher.launch("meal_diary_export.csv") },
                 modifier = Modifier.fillMaxWidth()
