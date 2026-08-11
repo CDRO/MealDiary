@@ -450,41 +450,46 @@ fun WeightTrendChart(history: List<ch.schmidlins.mealdiary.data.entities.WeightE
     val minWeight = history.minOf { it.weight }
     val range = (maxWeight - minWeight).coerceAtLeast(1.0)
     
-    Canvas(modifier = Modifier.fillMaxWidth().height(120.dp).padding(vertical = 8.dp)) {
-        val width = size.width
-        val height = size.height
-        val stepX = width / (history.size - 1).coerceAtLeast(1)
-        
-        val points = history.mapIndexed { index, entry ->
-            val x = index * stepX
-            val y = height - ((entry.weight - minWeight) / range * height).toFloat()
-            androidx.compose.ui.geometry.Offset(x, y)
+    Column {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("%.1f kg".format(maxWeight), style = MaterialTheme.typography.labelSmall)
+            Text("%.1f kg".format(minWeight), style = MaterialTheme.typography.labelSmall)
         }
-        
-        for (i in 0 until points.size - 1) {
-            drawLine(
-                color = color,
-                start = points[i],
-                end = points[i + 1],
-                strokeWidth = 4f
+        Canvas(modifier = Modifier.fillMaxWidth().height(120.dp).padding(vertical = 8.dp)) {
+            val width = size.width
+            val height = size.height
+            val stepX = width / (history.size - 1).coerceAtLeast(1)
+            
+            val points = history.mapIndexed { index, entry ->
+                val x = index * stepX
+                val y = height - ((entry.weight - minWeight) / range * height).toFloat()
+                androidx.compose.ui.geometry.Offset(x, y)
+            }
+            
+            for (i in 0 until points.size - 1) {
+                drawLine(
+                    color = color,
+                    start = points[i],
+                    end = points[i + 1],
+                    strokeWidth = 4f
+                )
+                drawCircle(color = color, center = points[i], radius = 6f)
+            }
+            drawCircle(color = color, center = points.last(), radius = 6f)
+            
+            val fillPath = androidx.compose.ui.graphics.Path().apply {
+                moveTo(points.first().x, height)
+                points.forEach { lineTo(it.x, it.y) }
+                lineTo(points.last().x, height)
+                close()
+            }
+            drawPath(
+                path = fillPath,
+                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                    colors = listOf(color.copy(alpha = 0.3f), androidx.compose.ui.graphics.Color.Transparent)
+                )
             )
-            drawCircle(color = color, center = points[i], radius = 6f)
         }
-        drawCircle(color = color, center = points.last(), radius = 6f)
-        
-        // Add a soft fill under the line
-        val fillPath = androidx.compose.ui.graphics.Path().apply {
-            moveTo(points.first().x, height)
-            points.forEach { lineTo(it.x, it.y) }
-            lineTo(points.last().x, height)
-            close()
-        }
-        drawPath(
-            path = fillPath,
-            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                colors = listOf(color.copy(alpha = 0.3f), androidx.compose.ui.graphics.Color.Transparent)
-            )
-        )
     }
 }
 
