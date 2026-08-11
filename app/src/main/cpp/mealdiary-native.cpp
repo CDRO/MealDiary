@@ -36,10 +36,11 @@ Java_ch_schmidlins_mealdiary_AnalysisEngine_analyzeCorrelations(
     const long long fourHours = 4 * 60 * 60 * 1000;
 
     for (int i = 0; i < mealCount; ++i) {
-        jstring descObj = (jstring)env->GetObjectArrayElement(mealDescriptions, i);
+        auto descObj = static_cast<jstring>(env->GetObjectArrayElement(mealDescriptions, i));
         const char* descChars = env->GetStringUTFChars(descObj, nullptr);
         std::string desc(descChars);
         env->ReleaseStringUTFChars(descObj, descChars);
+        env->DeleteLocalRef(descObj);
 
         totalCounts[desc]++;
         long long mTime = mTs[i];
@@ -67,9 +68,9 @@ Java_ch_schmidlins_mealdiary_AnalysisEngine_analyzeCorrelations(
     env->ReleaseLongArrayElements(bmTimestamps, bTs, JNI_ABORT);
 
     jclass stringClass = env->FindClass("java/lang/String");
-    jobjectArray ret = env->NewObjectArray(results.size(), stringClass, nullptr);
+    jobjectArray ret = env->NewObjectArray(static_cast<jsize>(results.size()), stringClass, nullptr);
     for (size_t i = 0; i < results.size(); ++i) {
-        env->SetObjectArrayElement(ret, i, env->NewStringUTF(results[i].c_str()));
+        env->SetObjectArrayElement(ret, static_cast<jsize>(i), env->NewStringUTF(results[i].c_str()));
     }
     return ret;
 }
