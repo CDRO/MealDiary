@@ -276,7 +276,7 @@ class MealViewModel(
         }
 
         weights.forEach { weight ->
-            sb.append("${weight.timestamp},WEIGHT,\"${weight.weight} ${weight.unit}\",\n")
+            sb.append("${weight.timestamp},WEIGHT,\"${weight.weight} ${weight.unit}\",\"\"\n")
         }
 
         return sb.toString()
