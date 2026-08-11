@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 class MealRepository(private val mealDao: MealDao) {
     val allMeals: Flow<List<Meal>> = mealDao.getAllMealsFlow()
     val firstMealTimestamp: Flow<Long?> = mealDao.getFirstMealTimestampFlow()
+    val recurringMealDescriptions: Flow<List<String>> = mealDao.getRecurringMealDescriptionsFlow()
 
     suspend fun insertMeal(meal: Meal) {
         mealDao.insertMeal(meal)
