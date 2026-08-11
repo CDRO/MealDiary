@@ -1,36 +1,37 @@
-# Walkthrough - Milestone 5: Data Overview
+# Walkthrough - Milestone 7: Heuristic Analysis (C++ Native)
 
-Milestone 5 introduced a comprehensive overview of the user's data, providing high-level summaries and a visual timeline of activities.
+Milestone 7 delivered the core pattern recognition engine of the application, implemented in native C++ for high performance and efficiency.
 
 ## Changes Made
 
-### 1. Navigation Integration
-- Integrated **Jetpack Navigation Compose**.
-- Implemented navigation between the **Main Diary Feed** and the new **Data Overview** screen.
-- Added an "Overview" icon to the main top bar for quick access.
+### 1. Native C++ Correlation Engine
+- Implemented `analyzeCorrelations` in `mealdiary-native.cpp`.
+- The engine identifies:
+    - **Accelerators**: Foods often followed by a bowel movement within 4 hours.
+    - **Decelerators**: Foods consumed frequently but rarely followed by a bowel movement.
+- Uses optimized C++ maps and vectors for data processing.
+- Fixed JNI memory management and string handling to prevent leaks and crashes.
 
-### 2. Data Overview Screen
-- Created a new **Overview Screen** that provides:
-    - **Weekly Summary**: Total counts of meals and bowel movements for the last 7 days.
-    - **Daily History**: A descending list of days with icons (🍴/💩) showing the activity counts for each date.
-    - **Empty State Handling**: Clear messaging when no historical data is available.
+### 2. ViewModel & JNI Bridge
+- Updated `AnalysisEngine.kt` with a robust JNI bridge that handles native library loading gracefully.
+- The engine now processes batches of meals and bowel movements for holistic analysis.
+- Integrated a minimum data threshold (5 meals) before insights are generated to ensure statistical relevance.
 
-### 3. Visual Timeline
-- Implemented a **Timeline Component** that visualizes today's activities.
-- Uses relative positioning on a 24-hour horizontal bar to show exactly when meals and bowel movements occurred during the day.
+### 3. Insights UI
+- Added a **Smart Insights** section to the `DataOverviewScreen`.
+- Identified patterns are displayed as persistent cards with helpful icons (✨).
+- Integrated with the existing chronological overview for a unified user experience.
 
-### 4. Logic & Testing
-- Updated `MealViewModel` to handle data grouping by date using `java.time` APIs.
-- Added comprehensive **Unit Tests** for date grouping and timeline filtering (15 total unit tests passing).
-- Added **Instrumented Interaction Tests** for navigation and overview display (6 total instrumented tests passing).
+### 4. Test Performance & Quality
+- Migrated all UI interaction tests to **Robolectric (JVM)**, resulting in a significant speed increase (tests run in seconds instead of minutes).
+- Added comprehensive unit tests for the heuristic math and data passing logic.
+- All 24 unit and interaction tests are passing.
 
 ## How to Verify
-1.  Launch the app.
-2.  Log some meals and bowel movements for today.
-3.  Tap the "Info" (Overview) icon in the top bar.
-4.  Observe the "Today's Timeline" with icons correctly positioned.
-5.  Observe the "Weekly Summary" and "Daily History" list items.
-6.  Tap the back arrow to return to the main feed.
+1.  Launch the app and log at least 5 meals.
+2.  Include "Coffee" in multiple meal descriptions followed by bowel movements.
+3.  Navigate to the **Overview** screen (Info icon).
+4.  Observe the "Smart Insights" section suggesting "Coffee might be an accelerator".
 
 ## Next Steps
-In Milestone 6, we will introduce **Advanced Statistics**, including BM frequency distributions and weight trend charts.
+In the final milestone, we will apply the final polish, including haptics, animations, and a full regression test run.
