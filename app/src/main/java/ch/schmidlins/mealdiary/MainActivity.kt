@@ -413,7 +413,7 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
 
 @Composable
 fun BMFrequencyChart(frequency: Double) {
-    val progress = (frequency / 3.0).coerceIn(0.0, 1.0).toFloat() // Scale 0-3 BMs/day
+    val progress = (frequency / 3.0).coerceIn(0.0, 1.0).toFloat()
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Box(modifier = Modifier.fillMaxWidth().height(24.dp)) {
             LinearProgressIndicator(
@@ -428,10 +428,17 @@ fun BMFrequencyChart(frequency: Double) {
                 Box(modifier = Modifier.width(2.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface).align(androidx.compose.ui.Alignment.CenterEnd))
             }
         }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("0", style = MaterialTheme.typography.labelSmall)
+            Text("1 (Goal)", style = MaterialTheme.typography.labelSmall)
+            Text("2", style = MaterialTheme.typography.labelSmall)
+            Text("3+", style = MaterialTheme.typography.labelSmall)
+        }
         Text(
-            text = "%.2f BMs per day (Goal: >1.0)".format(frequency),
+            text = "Current: %.2f BMs/day".format(frequency),
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.align(androidx.compose.ui.Alignment.End)
+            modifier = Modifier.align(androidx.compose.ui.Alignment.End).padding(top = 4.dp),
+            color = if (frequency >= 1.0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
         )
     }
 }
