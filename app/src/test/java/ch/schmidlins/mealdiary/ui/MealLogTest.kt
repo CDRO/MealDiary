@@ -191,4 +191,19 @@ class MealLogTest {
         // Verify savedBM was updated (consistency 4 is default in dialog)
         assert(savedBM?.consistency == 4)
     }
+
+    @Test
+    fun testAddDetailsButtonOpensDialog() {
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
+        
+        composeTestRule.setContent {
+            MealDiaryApp(viewModel, onNavigateToOverview = {})
+        }
+
+        // Tap Add icon button (Log BM with details)
+        composeTestRule.onNodeWithContentDescription("Log BM with details").performClick()
+        
+        // Verify dialog is shown
+        composeTestRule.onNodeWithText("Bowel Movement Details").assertIsDisplayed()
+    }
 }

@@ -289,7 +289,17 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                                     },
                                     supportingContent = {
                                         if (item.bm.consistency != null) {
-                                            Text("Bristol: ${item.bm.consistency}, Pain: ${item.bm.painLevel}/10")
+                                            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                                Text("B${item.bm.consistency}", style = MaterialTheme.typography.labelSmall)
+                                                if ((item.bm.painLevel ?: 0) > 0) {
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text("🔥 ${item.bm.painLevel}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                                                }
+                                                if ((item.bm.durationMinutes ?: 0) > 0) {
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text("⏱️ ${item.bm.durationMinutes}m", style = MaterialTheme.typography.labelSmall)
+                                                }
+                                            }
                                         }
                                     },
                                     leadingContent = { Text("💩") },
