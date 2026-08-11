@@ -6,9 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -71,8 +73,9 @@ class MainActivity : ComponentActivity() {
 fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val haptic = LocalHapticFeedback.current
-    var mealText by remember { mutableStateOf("") }
+    val mealText by viewModel.mealInputText.collectAsState()
     var weightText by remember { mutableStateOf("") }
+    val suggestions by viewModel.mealSuggestions.observeAsState(emptyList())
     val feedItems by viewModel.unifiedFeed.observeAsState(emptyList())
     val shouldAskBM by viewModel.shouldAskAboutBM.observeAsState(false)
     val shouldShowWeightSuggestion by viewModel.shouldShowWeightSuggestion.observeAsState(false)
@@ -182,17 +185,32 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
 
             OutlinedTextField(
                 value = mealText,
-                onValueChange = { mealText = it },
+                onValueChange = { viewModel.updateMealInputText(it) },
                 label = { Text("What did you eat?") },
                 modifier = Modifier.fillMaxWidth()
             )
+            
+            if (suggestions.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    suggestions.forEach { suggestion ->
+                        SuggestionChip(
+                            onClick = { viewModel.updateMealInputText(suggestion) },
+                            label = { Text(suggestion) }
+                        )
+                    }
+                }
+            }
+            
             Spacer(modifier = Modifier.height(8.dp))
             Row {
                 Button(onClick = { 
                     if (mealText.isNotBlank()) {
                         haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                         viewModel.addMeal(mealText)
-                        mealText = ""
+                        viewModel.updateMealInputText("")
                     }
                 }) {
                     Text("Log Meal")
