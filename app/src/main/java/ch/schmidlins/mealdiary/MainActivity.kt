@@ -209,57 +209,59 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
             LazyColumn {
                 items(feedItems, key = { "${it.javaClass.simpleName}-${it.id}" }) { item ->
                     val timeStr = dateFormat.format(Date(item.timestamp))
-                    when (item) {
-                        is FeedItem.MealItem -> {
-                            ListItem(
-                                headlineContent = { Text(item.meal.description) },
-                                leadingContent = { Text("🍴") },
-                                trailingContent = {
-                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { 
-                                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                            viewModel.deleteMeal(item.meal) 
-                                        }) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                    Box(modifier = Modifier.animateItem()) {
+                        when (item) {
+                            is FeedItem.MealItem -> {
+                                ListItem(
+                                    headlineContent = { Text(item.meal.description) },
+                                    leadingContent = { Text("🍴") },
+                                    trailingContent = {
+                                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                            Text(timeStr, style = MaterialTheme.typography.labelSmall)
+                                            IconButton(onClick = { 
+                                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                                viewModel.deleteMeal(item.meal) 
+                                            }) {
+                                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                            }
                                         }
                                     }
-                                }
-                            )
-                        }
-                        is FeedItem.BMItem -> {
-                            ListItem(
-                                headlineContent = { Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) },
-                                leadingContent = { Text("💩") },
-                                trailingContent = {
-                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { 
-                                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                            viewModel.deleteBM(item.bm) 
-                                        }) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                )
+                            }
+                            is FeedItem.BMItem -> {
+                                ListItem(
+                                    headlineContent = { Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) },
+                                    leadingContent = { Text("💩") },
+                                    trailingContent = {
+                                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                            Text(timeStr, style = MaterialTheme.typography.labelSmall)
+                                            IconButton(onClick = { 
+                                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                                viewModel.deleteBM(item.bm) 
+                                            }) {
+                                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                            }
                                         }
                                     }
-                                }
-                            )
-                        }
-                        is FeedItem.WeightItem -> {
-                            ListItem(
-                                headlineContent = { Text("Weight: ${item.weightEntry.weight} ${item.weightEntry.unit}", color = MaterialTheme.colorScheme.secondary) },
-                                leadingContent = { Text("⚖️") },
-                                trailingContent = {
-                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { 
-                                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                            viewModel.deleteWeight(item.weightEntry) 
-                                        }) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                )
+                            }
+                            is FeedItem.WeightItem -> {
+                                ListItem(
+                                    headlineContent = { Text("Weight: ${item.weightEntry.weight} ${item.weightEntry.unit}", color = MaterialTheme.colorScheme.secondary) },
+                                    leadingContent = { Text("⚖️") },
+                                    trailingContent = {
+                                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                            Text(timeStr, style = MaterialTheme.typography.labelSmall)
+                                            IconButton(onClick = { 
+                                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                                viewModel.deleteWeight(item.weightEntry) 
+                                            }) {
+                                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                            }
                                         }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
