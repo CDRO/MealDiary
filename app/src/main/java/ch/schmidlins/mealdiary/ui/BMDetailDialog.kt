@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import ch.schmidlins.mealdiary.data.entities.BowelMovement
 
@@ -13,6 +14,7 @@ fun BMDetailDialog(
     onDismiss: () -> Unit,
     onSave: (BowelMovement) -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     var consistency by remember { mutableStateOf((bm.consistency ?: 4).toFloat()) }
     var painLevel by remember { mutableStateOf((bm.painLevel ?: 0).toFloat()) }
     var duration by remember { mutableStateOf((bm.durationMinutes ?: 5).toFloat()) }
@@ -33,12 +35,13 @@ fun BMDetailDialog(
                     7 -> Pair("Watery (Diarrhea)", "🌊")
                     else -> Pair("", "")
                 }
-                Text("Consistency: ${bristolInfo.second} ${bristolInfo.first}")
+                Text("Consistency: ${bristolInfo.second} ${bristolInfo.first}", style = MaterialTheme.typography.bodyMedium)
                 Slider(
                     value = consistency,
                     onValueChange = { consistency = it },
                     valueRange = 1f..7f,
-                    steps = 5
+                    steps = 5,
+                    colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary)
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -77,6 +80,7 @@ fun BMDetailDialog(
         },
         confirmButton = {
             Button(onClick = {
+                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                 onSave(bm.copy(
                     consistency = consistency.toInt(),
                     painLevel = painLevel.toInt(),
