@@ -3,32 +3,68 @@ package ch.schmidlins.mealdiary.ui.settings
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import ch.schmidlins.mealdiary.data.AppDatabase
+import ch.schmidlins.mealdiary.data.repository.BMRepository
+import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
+import ch.schmidlins.mealdiary.data.repository.WeightRepository
+import ch.schmidlins.mealdiary.ui.MealViewModel
+import ch.schmidlins.mealdiary.ui.MealViewModelFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.OutputStreamWriter
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val database = AppDatabase.getDatabase(this)
+        val mealRepository = MealRepository(database.mealDao())
+        val bmRepository = BMRepository(database.bowelMovementDao())
+        val weightRepository = WeightRepository(database.weightEntryDao())
         val prefsRepo = UserPreferencesRepository(this)
+        val viewModelFactory = MealViewModelFactory(mealRepository, bmRepository, weightRepository, prefsRepo)
+        val viewModel = androidx.lifecycle.ViewModelProvider(this, viewModelFactory).get(MealViewModel::class.java)
 
         setContent {
-            SettingsScreen(prefsRepo)
+            SettingsScreen(prefsRepo, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(prefsRepo: UserPreferencesRepository) {
+fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewModel) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     val bmInterval by prefsRepo.bmPromptIntervalHours.collectAsState(initial = 24)
     val reminderEnabled by prefsRepo.isReminderEnabled.collectAsState(initial = true)
     val weightEnabled by prefsRepo.isWeightTrackingEnabled.collectAsState(initial = false)
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv"),
+        onResult = { uri ->
+            uri?.let {
+                scope.launch {
+                    val csvData = viewModel.getCSVData()
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                            OutputStreamWriter(outputStream).use { writer ->
+                                writer.write(csvData)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Settings") }) }
@@ -61,6 +97,15 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository) {
                     checked = weightEnabled,
                     onCheckedChange = { scope.launch { prefsRepo.updateWeightTrackingEnabled(it) } }
                 )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(
+                onClick = { exportLauncher.launch("meal_diary_export.csv") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Export Data to CSV")
             }
         }
     }
