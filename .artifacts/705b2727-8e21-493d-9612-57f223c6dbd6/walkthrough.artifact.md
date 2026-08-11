@@ -1,37 +1,31 @@
-# Walkthrough - Milestone 7: Heuristic Analysis (C++ Native)
+# Walkthrough - Milestone 8: Data Export (CSV)
 
-Milestone 7 delivered the core pattern recognition engine of the application, implemented in native C++ for high performance and efficiency.
+Milestone 8 added a critical data portability feature, allowing users to export their entire history of meals, bowel movements, and weight entries to a CSV file.
 
 ## Changes Made
 
-### 1. Native C++ Correlation Engine
-- Implemented `analyzeCorrelations` in `mealdiary-native.cpp`.
-- The engine identifies:
-    - **Accelerators**: Foods often followed by a bowel movement within 4 hours.
-    - **Decelerators**: Foods consumed frequently but rarely followed by a bowel movement.
-- Uses optimized C++ maps and vectors for data processing.
-- Fixed JNI memory management and string handling to prevent leaks and crashes.
+### 1. Unified CSV Generation
+- Implemented `getCSVData()` in `MealViewModel`.
+- Aggregates data from `Meal`, `BowelMovement`, and `WeightEntry` repositories.
+- Format: `Timestamp, Type, Value, Notes`.
+- Robust escaping for descriptions and notes containing quotes or commas.
 
-### 2. ViewModel & JNI Bridge
-- Updated `AnalysisEngine.kt` with a robust JNI bridge that handles native library loading gracefully.
-- The engine now processes batches of meals and bowel movements for holistic analysis.
-- Integrated a minimum data threshold (5 meals) before insights are generated to ensure statistical relevance.
+### 2. Export UI & Storage Integration
+- Added an **"Export Data to CSV"** button in the Settings screen.
+- Integrated **Storage Access Framework (SAF)** via `ActivityResultContracts.CreateDocument`.
+- The app allows users to choose the save location (Downloads, Cloud storage, etc.) and handles the asynchronous file writing on a background thread (`Dispatchers.IO`).
 
-### 3. Insights UI
-- Added a **Smart Insights** section to the `DataOverviewScreen`.
-- Identified patterns are displayed as persistent cards with helpful icons (✨).
-- Integrated with the existing chronological overview for a unified user experience.
-
-### 4. Test Performance & Quality
-- Migrated all UI interaction tests to **Robolectric (JVM)**, resulting in a significant speed increase (tests run in seconds instead of minutes).
-- Added comprehensive unit tests for the heuristic math and data passing logic.
-- All 24 unit and interaction tests are passing.
+### 3. High-Speed Quality Assurance
+- **Unit Tests**: Added tests in `MealViewModelTest` to verify that the CSV string is generated with correct headers and escaped values.
+- **Robolectric Tests**: Added `SettingsActivityTest` to verify the "Export" button is present and functional in the UI.
+- All 26 unit and interaction tests are passing in seconds on the JVM.
 
 ## How to Verify
-1.  Launch the app and log at least 5 meals.
-2.  Include "Coffee" in multiple meal descriptions followed by bowel movements.
-3.  Navigate to the **Overview** screen (Info icon).
-4.  Observe the "Smart Insights" section suggesting "Coffee might be an accelerator".
+1.  Launch the app and log some data (Meal, BM, Weight).
+2.  Go to **Settings** (Gear icon in top bar).
+3.  Tap **Export Data to CSV**.
+4.  The system file picker will appear. Select a location and tap **Save**.
+5.  Open the file in a spreadsheet app or text editor to see your data.
 
 ## Next Steps
-In the final milestone, we will apply the final polish, including haptics, animations, and a full regression test run.
+In the final milestone (**Milestone 9: Final Polish**), we will refine the transitions, add haptic feedback to all logging actions, and perform a final verification run.
