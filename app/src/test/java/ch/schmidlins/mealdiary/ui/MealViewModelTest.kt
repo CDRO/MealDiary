@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import ch.schmidlins.mealdiary.data.entities.BowelMovement
 import ch.schmidlins.mealdiary.data.entities.Meal
+import ch.schmidlins.mealdiary.data.entities.WeightEntry
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
@@ -12,12 +13,12 @@ import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertEquals
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -33,10 +34,12 @@ class MealViewModelTest {
     private lateinit var bmRepository: BMRepository
     private lateinit var weightRepository: WeightRepository
     private lateinit var userPreferencesRepository: UserPreferencesRepository
+    private lateinit var analysisEngine: ch.schmidlins.mealdiary.AnalysisEngine
     private lateinit var viewModel: MealViewModel
 
     private val mealsFlow = MutableStateFlow<List<Meal>>(emptyList())
     private val bmsFlow = MutableStateFlow<List<BowelMovement>>(emptyList())
+    private val weightsFlow = MutableStateFlow<List<WeightEntry>>(emptyList())
     private val firstMealTimestampFlow = MutableStateFlow<Long?>(null)
     private val lastBMTimestampFlow = MutableStateFlow<Long?>(null)
     private val bmIntervalFlow = MutableStateFlow(24)
@@ -50,17 +53,18 @@ class MealViewModelTest {
         bmRepository = mockk(relaxed = true)
         weightRepository = mockk(relaxed = true)
         userPreferencesRepository = mockk(relaxed = true)
+        analysisEngine = mockk(relaxed = true)
 
         every { mealRepository.allMeals } returns mealsFlow
         every { bmRepository.allBMs } returns bmsFlow
-        every { weightRepository.allWeightEntries } returns flowOf(emptyList())
+        every { weightRepository.allWeightEntries } returns weightsFlow
         every { mealRepository.firstMealTimestamp } returns firstMealTimestampFlow
         every { bmRepository.lastBMTimestamp } returns lastBMTimestampFlow
         every { userPreferencesRepository.bmPromptIntervalHours } returns bmIntervalFlow
         every { userPreferencesRepository.isWeightTrackingEnabled } returns isWeightTrackingEnabledFlow
         every { userPreferencesRepository.weightSuggestionDismissed } returns weightSuggestionDismissedFlow
 
-        viewModel = MealViewModel(mealRepository, bmRepository, weightRepository, userPreferencesRepository)
+        viewModel = MealViewModel(mealRepository, bmRepository, weightRepository, userPreferencesRepository, analysisEngine)
     }
 
     @After
@@ -115,7 +119,7 @@ class MealViewModelTest {
         
         val todayItems = captured.last()
         assert(todayItems.all { 
-            java.time.Instant.ofEpochMilli(it.timestamp).atZone(java.time.ZoneId.systemDefault()).toLocalDate() == today 
+            java.time.Instant.ofEpochMilli(it.timestamp).atZone(ZoneId.systemDefault()).toLocalDate() == today 
         })
         assert(todayItems.size == 1)
     }
@@ -231,5 +235,83 @@ class MealViewModelTest {
         viewModel.shouldShowWeightSuggestion.observeForever(observer)
 
         verify { observer.onChanged(false) }
+    }
+
+    @Test
+    fun `statistics correctly calculates avg BM frequency and weight delta`() {
+        val now = System.currentTimeMillis()
+        val twoDaysAgo = now - (2 * 24 * 60 * 60 * 1000L)
+        
+        mealsFlow.value = listOf(Meal(1, twoDaysAgo, "First Meal"))
+        bmsFlow.value = listOf(
+            BowelMovement(1, now),
+            BowelMovement(2, now - 1000)
+        )
+        
+        val weights = listOf(
+            WeightEntry(1, now, 70.0),
+            WeightEntry(2, twoDaysAgo, 72.0)
+        )
+        weightsFlow.value = weights
+
+        val observer = mockk<Observer<Statistics>>(relaxed = true)
+        viewModel.statistics.observeForever(observer)
+
+        val captured = mutableListOf<Statistics>()
+        verify { observer.onChanged(capture(captured)) }
+        
+        val stats = captured.last()
+        // 2 BMs over 2 days = 1.0 per day
+        assertEquals(1.0, stats.avgBMFrequency, 0.1)
+        assertEquals(-2.0, stats.weightDelta!!, 0.1)
+        assertEquals(71.0, stats.avgWeight!!, 0.1)
+    }
+
+    @Test
+    fun `statistics correctly identifies top logged foods`() {
+        mealsFlow.value = listOf(
+            Meal(1, 1000, "Pizza"),
+            Meal(2, 2000, "Pizza"),
+            Meal(3, 3000, "Pasta"),
+            Meal(4, 4000, "Salad"),
+            Meal(5, 5000, "Pizza"),
+            Meal(6, 6000, "Pasta")
+        )
+
+        val observer = mockk<Observer<Statistics>>(relaxed = true)
+        viewModel.statistics.observeForever(observer)
+
+        val captured = mutableListOf<Statistics>()
+        verify { observer.onChanged(capture(captured)) }
+        
+        val topFoods = captured.last().topFoods
+        assertEquals(3, topFoods.size)
+        assertEquals("Pizza", topFoods[0].first)
+        assertEquals(3, topFoods[0].second)
+        assertEquals("Pasta", topFoods[1].first)
+        assertEquals(2, topFoods[1].second)
+    }
+
+    @Test
+    fun `insights flow calls analysisEngine with correct data`() {
+        val meals = listOf(
+            Meal(1, 1000, "Coffee"),
+            Meal(2, 1100, "Coffee"),
+            Meal(3, 1200, "Coffee"),
+            Meal(4, 1300, "Coffee"),
+            Meal(5, 1400, "Coffee")
+        )
+        val bms = listOf(BowelMovement(1, 2000))
+        mealsFlow.value = meals
+        bmsFlow.value = bms
+        
+        val expectedInsights = listOf("Coffee might be an accelerator")
+        every { analysisEngine.analyze(meals, bms) } returns expectedInsights
+
+        val observer = mockk<Observer<List<String>>>(relaxed = true)
+        viewModel.insights.observeForever(observer)
+
+        verify { analysisEngine.analyze(meals, bms) }
+        verify { observer.onChanged(expectedInsights) }
     }
 }

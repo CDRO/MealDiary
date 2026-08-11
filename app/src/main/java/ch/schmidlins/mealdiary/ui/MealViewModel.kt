@@ -1,6 +1,7 @@
 package ch.schmidlins.mealdiary.ui
 
 import androidx.lifecycle.*
+import ch.schmidlins.mealdiary.AnalysisEngine
 import ch.schmidlins.mealdiary.data.entities.BowelMovement
 import ch.schmidlins.mealdiary.data.entities.Meal
 import ch.schmidlins.mealdiary.data.entities.WeightEntry
@@ -21,6 +22,14 @@ data class DailySummary(
     val date: LocalDate,
     val mealCount: Int,
     val bmCount: Int
+)
+
+data class Statistics(
+    val avgBMFrequency: Double,
+    val weightDelta: Double?,
+    val avgWeight: Double?,
+    val topFoods: List<Pair<String, Int>>,
+    val weightHistory: List<WeightEntry>
 )
 
 sealed class FeedItem {
@@ -47,7 +56,8 @@ class MealViewModel(
     private val mealRepository: MealRepository,
     private val bmRepository: BMRepository,
     private val weightRepository: WeightRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val analysisEngine: AnalysisEngine = AnalysisEngine()
 ) : ViewModel() {
 
     val meals: LiveData<List<Meal>> = mealRepository.allMeals.asLiveData()
@@ -128,6 +138,44 @@ class MealViewModel(
             bmCount = last7Days.sumOf { it.bmCount }
         )
     }
+
+    val statistics: LiveData<Statistics> = combine(
+        mealRepository.allMeals,
+        bmRepository.allBMs,
+        weightRepository.allWeightEntries
+    ) { meals, bms, weights ->
+        val totalDays: Double = if (meals.isEmpty()) 1.0 else {
+            val firstMeal = meals.minOf { it.timestamp }
+            val diff = System.currentTimeMillis() - firstMeal
+            (diff / (24 * 60 * 60 * 1000L)).coerceAtLeast(1).toDouble()
+        }
+
+        val avgBM = bms.size.toDouble() / totalDays
+        
+        val delta = if (weights.size >= 2) {
+            val latest = weights.first().weight
+            val first = weights.last().weight
+            latest - first
+        } else null
+
+        val avgWeight = if (weights.isNotEmpty()) weights.map { it.weight }.average() else null
+
+        val topFoods = meals.groupBy { it.description }
+            .mapValues { it.value.size }
+            .toList()
+            .sortedByDescending { it.second }
+            .take(5)
+
+        Statistics(avgBM, delta, avgWeight, topFoods, weights.sortedBy { it.timestamp })
+    }.asLiveData()
+
+    val insights: LiveData<List<String>> = combine(
+        mealRepository.allMeals,
+        bmRepository.allBMs
+    ) { meals, bms ->
+        if (meals.size < 5) return@combine emptyList<String>()
+        analysisEngine.analyze(meals, bms)
+    }.asLiveData()
 
     val todayTimeline: LiveData<List<FeedItem>> = unifiedFeed.asFlow().map { items ->
         val today = LocalDate.now()

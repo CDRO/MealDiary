@@ -124,12 +124,45 @@ class MealLogTest {
         composeTestRule.onNodeWithContentDescription("Overview").performClick()
 
         // Verify Overview screen is shown
-        composeTestRule.onNodeWithText("Daily History").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Overview").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Today's Timeline").assertIsDisplayed()
         
         // Click Back
         composeTestRule.onNodeWithContentDescription("Back").performClick()
 
         // Verify back on main screen
         composeTestRule.onNodeWithText("What did you eat?").assertIsDisplayed()
+    }
+
+    @Test
+    fun testInsightsVisibilityInOverview() {
+        val mealRepoM = mockk<MealRepository>(relaxed = true)
+        every { mealRepoM.allMeals } returns flowOf(emptyList())
+        every { mealRepoM.firstMealTimestamp } returns flowOf(null)
+        
+        val viewModel = MealViewModel(mealRepoM, bmRepo, weightRepo, prefsRepo)
+
+        // Mock insights explicitly in the view model or repo
+        // Since ViewModel uses the repo to build insights, we mock the repo call or the VM property.
+        // Actually, let's just mock the VM for this specific UI test if needed, 
+        // but here we are using real VM with mocked Repos.
+        
+        composeTestRule.setContent {
+            val navController = rememberNavController()
+            NavHost(navController = navController, startDestination = "main") {
+                composable("main") {
+                    MealDiaryApp(viewModel, onNavigateToOverview = { navController.navigate("overview") })
+                }
+                composable("overview") {
+                    DataOverviewScreen(viewModel, onBack = { navController.popBackStack() })
+                }
+            }
+        }
+
+        // Navigate to Overview
+        composeTestRule.onNodeWithContentDescription("Overview").performClick()
+
+        // Insights should be empty by default with empty repo
+        composeTestRule.onNodeWithText("Smart Insights").assertDoesNotExist()
     }
 }

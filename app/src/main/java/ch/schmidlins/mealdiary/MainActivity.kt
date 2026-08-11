@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +18,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -66,6 +70,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val haptic = LocalHapticFeedback.current
     var mealText by remember { mutableStateOf("") }
     var weightText by remember { mutableStateOf("") }
     val feedItems by viewModel.unifiedFeed.observeAsState(emptyList())
@@ -177,6 +182,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
             Row {
                 Button(onClick = { 
                     if (mealText.isNotBlank()) {
+                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                         viewModel.addMeal(mealText)
                         mealText = ""
                     }
@@ -184,7 +190,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                     Text("Log Meal")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { viewModel.addBowelMovement() }) {
+                Button(onClick = { 
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                    viewModel.addBowelMovement() 
+                }) {
                     Text("Log BM")
                 }
             }
@@ -248,6 +257,8 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
     val summaries by viewModel.dailySummaries.observeAsState(emptyList())
     val todayItems by viewModel.todayTimeline.observeAsState(emptyList())
     val weeklySummary by viewModel.weeklySummary.observeAsState()
+    val statistics by viewModel.statistics.observeAsState()
+    val insights by viewModel.insights.observeAsState(emptyList())
 
     Scaffold(
         topBar = {
@@ -288,6 +299,72 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
                 TimelineComponent(todayItems)
                 Spacer(modifier = Modifier.height(24.dp))
             }
+
+            item {
+                if (insights.isNotEmpty()) {
+                    Text("Smart Insights", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            insights.forEach { insight ->
+                                Text("✨ $insight", style = MaterialTheme.typography.bodyMedium)
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
+
+            item {
+                statistics?.let { stats ->
+                    Text("Advanced Statistics", style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Avg. BM Frequency", style = MaterialTheme.typography.labelLarge)
+                            BMFrequencyChart(stats.avgBMFrequency)
+                            
+                            stats.avgWeight?.let { avg ->
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Weight Summary", style = MaterialTheme.typography.labelLarge)
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Average: %.1f kg".format(avg), style = MaterialTheme.typography.bodySmall)
+                                    stats.weightDelta?.let { delta ->
+                                        Text("Change: ${if (delta > 0) "+" else ""}${"%.1f".format(delta)} kg", 
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (delta < 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
+                            if (stats.topFoods.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Top Foods", style = MaterialTheme.typography.labelLarge)
+                                stats.topFoods.forEach { (food, count) ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(food, style = MaterialTheme.typography.bodySmall)
+                                        Text("$count logs", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                    }
+                                }
+                            }
+                            
+                            if (stats.weightHistory.size >= 2) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Weight Trend:", style = MaterialTheme.typography.labelLarge)
+                                WeightTrendChart(stats.weightHistory)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
             
             item {
                 Text("Daily History", style = MaterialTheme.typography.titleLarge)
@@ -304,12 +381,84 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
                 ) {
                     ListItem(
                         headlineContent = { Text(summary.date.toString()) },
-                        supportingContent = { Text("🍴 ${summary.mealCount} Meals, 💩 ${summary.bmCount} BMs") },
+                        supportingContent = { 
+                            Text("🍴 ${summary.mealCount} Meals, 💩 ${summary.bmCount} BMs")
+                        },
                         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun BMFrequencyChart(frequency: Double) {
+    val progress = (frequency / 3.0).coerceIn(0.0, 1.0).toFloat() // Scale 0-3 BMs/day
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Box(modifier = Modifier.fillMaxWidth().height(24.dp)) {
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().height(12.dp).align(androidx.compose.ui.Alignment.Center),
+                color = if (frequency >= 1.0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+            )
+            // Goal marker at 1.0/day
+            Box(modifier = Modifier.fillMaxWidth(1f/3f).fillMaxHeight().align(androidx.compose.ui.Alignment.CenterStart)) {
+                Box(modifier = Modifier.width(2.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface).align(androidx.compose.ui.Alignment.CenterEnd))
+            }
+        }
+        Text(
+            text = "%.2f BMs per day (Goal: >1.0)".format(frequency),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.align(androidx.compose.ui.Alignment.End)
+        )
+    }
+}
+
+@Composable
+fun WeightTrendChart(history: List<ch.schmidlins.mealdiary.data.entities.WeightEntry>) {
+    val color = MaterialTheme.colorScheme.secondary
+    val maxWeight = history.maxOf { it.weight }
+    val minWeight = history.minOf { it.weight }
+    val range = (maxWeight - minWeight).coerceAtLeast(1.0)
+    
+    Canvas(modifier = Modifier.fillMaxWidth().height(120.dp).padding(vertical = 8.dp)) {
+        val width = size.width
+        val height = size.height
+        val stepX = width / (history.size - 1).coerceAtLeast(1)
+        
+        val points = history.mapIndexed { index, entry ->
+            val x = index * stepX
+            val y = height - ((entry.weight - minWeight) / range * height).toFloat()
+            androidx.compose.ui.geometry.Offset(x, y)
+        }
+        
+        for (i in 0 until points.size - 1) {
+            drawLine(
+                color = color,
+                start = points[i],
+                end = points[i + 1],
+                strokeWidth = 4f
+            )
+            drawCircle(color = color, center = points[i], radius = 6f)
+        }
+        drawCircle(color = color, center = points.last(), radius = 6f)
+        
+        // Add a soft fill under the line
+        val fillPath = androidx.compose.ui.graphics.Path().apply {
+            moveTo(points.first().x, height)
+            points.forEach { lineTo(it.x, it.y) }
+            lineTo(points.last().x, height)
+            close()
+        }
+        drawPath(
+            path = fillPath,
+            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                colors = listOf(color.copy(alpha = 0.3f), androidx.compose.ui.graphics.Color.Transparent)
+            )
+        )
     }
 }
 
@@ -331,15 +480,6 @@ fun TimelineComponent(items: List<FeedItem>) {
                     val color = if (item is FeedItem.MealItem) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
                     val icon = if (item is FeedItem.MealItem) "🍴" else "💩"
                     
-                    Column(
-                        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                        modifier = Modifier.align(androidx.compose.ui.Alignment.CenterStart).fillMaxWidth(offset)
-                    ) {
-                        // This is a simple way to position items along the width. 
-                        // For better precision, use a Canvas or Box with offset.
-                    }
-                    
-                    // Improved positioning using Box with padding/bias or custom layout
                     Box(modifier = Modifier.fillMaxWidth().align(androidx.compose.ui.Alignment.Center)) {
                         Column(
                             horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
