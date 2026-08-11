@@ -23,7 +23,17 @@ fun BMDetailDialog(
         title = { Text("Bowel Movement Details") },
         text = {
             Column {
-                Text("Consistency (Bristol Scale: ${consistency.toInt()})")
+                val bristolDescription = when (consistency.toInt()) {
+                    1 -> "Hard lumps (Constipation)"
+                    2 -> "Lumpy sausage"
+                    3 -> "Cracked sausage"
+                    4 -> "Smooth sausage (Ideal)"
+                    5 -> "Soft blobs"
+                    6 -> "Mushy/Fluffy"
+                    7 -> "Watery (Diarrhea)"
+                    else -> ""
+                }
+                Text("Consistency: $bristolDescription")
                 Slider(
                     value = consistency,
                     onValueChange = { consistency = it },
@@ -32,7 +42,15 @@ fun BMDetailDialog(
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Pain Level: ${painLevel.toInt()}")
+                val painDescription = when (painLevel.toInt()) {
+                    0 -> "None"
+                    in 1..3 -> "Mild"
+                    in 4..6 -> "Moderate"
+                    in 7..9 -> "Severe"
+                    10 -> "Unbearable"
+                    else -> ""
+                }
+                Text("Pain Level: $painDescription (${painLevel.toInt()})")
                 Slider(
                     value = painLevel,
                     onValueChange = { painLevel = it },
