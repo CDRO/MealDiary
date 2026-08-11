@@ -17,4 +17,7 @@ interface MealDao {
 
     @Query("SELECT MIN(timestamp) FROM meals")
     fun getFirstMealTimestampFlow(): Flow<Long?>
+
+    @Query("SELECT description FROM meals GROUP BY description HAVING COUNT(*) >= 5")
+    fun getRecurringMealDescriptionsFlow(): Flow<List<String>>
 }

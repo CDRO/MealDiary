@@ -6,9 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -71,8 +73,9 @@ class MainActivity : ComponentActivity() {
 fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val haptic = LocalHapticFeedback.current
-    var mealText by remember { mutableStateOf("") }
+    val mealText by viewModel.mealInputText.collectAsState()
     var weightText by remember { mutableStateOf("") }
+    val suggestions by viewModel.mealSuggestions.observeAsState(emptyList())
     val feedItems by viewModel.unifiedFeed.observeAsState(emptyList())
     val shouldAskBM by viewModel.shouldAskAboutBM.observeAsState(false)
     val shouldShowWeightSuggestion by viewModel.shouldShowWeightSuggestion.observeAsState(false)
@@ -105,7 +108,8 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                 Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.height(8.dp))
             }
-            if (shouldAskBM) {
+            
+            androidx.compose.animation.AnimatedVisibility(visible = shouldAskBM) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -113,7 +117,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Have you had a bowel movement in the last 24h?", style = MaterialTheme.typography.bodyLarge)
                         Button(
-                            onClick = { viewModel.addBowelMovement() },
+                            onClick = { 
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                viewModel.addBowelMovement() 
+                            },
                             modifier = Modifier.padding(top = 8.dp)
                         ) {
                             Text("Yes, Log now")
@@ -122,7 +129,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                 }
             }
 
-            if (shouldShowWeightSuggestion) {
+            androidx.compose.animation.AnimatedVisibility(visible = shouldShowWeightSuggestion) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
@@ -130,7 +137,10 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("You've been using MealDiary for a week! Would you like to track your weight as well?", style = MaterialTheme.typography.bodyLarge)
                         Row(modifier = Modifier.padding(top = 8.dp)) {
-                            Button(onClick = { viewModel.enableWeightTracking() }) {
+                            Button(onClick = { 
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                viewModel.enableWeightTracking() 
+                            }) {
                                 Text("Yes, Enable")
                             }
                             Spacer(modifier = Modifier.width(8.dp))
@@ -142,7 +152,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                 }
             }
 
-            if (isWeightTrackingEnabled) {
+            androidx.compose.animation.AnimatedVisibility(visible = isWeightTrackingEnabled) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -162,6 +172,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(onClick = {
                             weightText.toDoubleOrNull()?.let {
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                                 viewModel.addWeightEntry(it)
                                 weightText = ""
                             }
@@ -174,17 +185,32 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
 
             OutlinedTextField(
                 value = mealText,
-                onValueChange = { mealText = it },
+                onValueChange = { viewModel.updateMealInputText(it) },
                 label = { Text("What did you eat?") },
                 modifier = Modifier.fillMaxWidth()
             )
+            
+            if (suggestions.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    suggestions.forEach { suggestion ->
+                        SuggestionChip(
+                            onClick = { viewModel.updateMealInputText(suggestion) },
+                            label = { Text(suggestion) }
+                        )
+                    }
+                }
+            }
+            
             Spacer(modifier = Modifier.height(8.dp))
             Row {
                 Button(onClick = { 
                     if (mealText.isNotBlank()) {
                         haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                         viewModel.addMeal(mealText)
-                        mealText = ""
+                        viewModel.updateMealInputText("")
                     }
                 }) {
                     Text("Log Meal")
@@ -201,48 +227,54 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
             LazyColumn {
                 items(feedItems, key = { "${it.javaClass.simpleName}-${it.id}" }) { item ->
                     val timeStr = dateFormat.format(Date(item.timestamp))
-                    when (item) {
-                        is FeedItem.MealItem -> {
-                            ListItem(
-                                headlineContent = { Text(item.meal.description) },
-                                leadingContent = { Text("🍴") },
-                                trailingContent = {
-                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { viewModel.deleteMeal(item.meal) }) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                        }
-                                    }
+                    
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = {
+                            if (it == SwipeToDismissBoxValue.EndToStart) {
+                                when (item) {
+                                    is FeedItem.MealItem -> viewModel.deleteMeal(item.meal)
+                                    is FeedItem.BMItem -> viewModel.deleteBM(item.bm)
+                                    is FeedItem.WeightItem -> viewModel.deleteWeight(item.weightEntry)
                                 }
-                            )
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                true
+                            } else false
                         }
-                        is FeedItem.BMItem -> {
-                            ListItem(
-                                headlineContent = { Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) },
-                                leadingContent = { Text("💩") },
-                                trailingContent = {
-                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { viewModel.deleteBM(item.bm) }) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                        is FeedItem.WeightItem -> {
-                            ListItem(
-                                headlineContent = { Text("Weight: ${item.weightEntry.weight} ${item.weightEntry.unit}", color = MaterialTheme.colorScheme.secondary) },
-                                leadingContent = { Text("⚖️") },
-                                trailingContent = {
-                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                        Text(timeStr, style = MaterialTheme.typography.labelSmall)
-                                        IconButton(onClick = { viewModel.deleteWeight(item.weightEntry) }) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                        }
-                                    }
-                                }
-                            )
+                    )
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        backgroundContent = {
+                            val color = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) MaterialTheme.colorScheme.error else androidx.compose.ui.graphics.Color.Transparent
+                            Box(modifier = Modifier.fillMaxSize().background(color).padding(horizontal = 20.dp), contentAlignment = androidx.compose.ui.Alignment.CenterEnd) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = androidx.compose.ui.graphics.Color.White)
+                            }
+                        },
+                        enableDismissFromStartToEnd = false,
+                        modifier = Modifier.animateItem()
+                    ) {
+                        when (item) {
+                            is FeedItem.MealItem -> {
+                                ListItem(
+                                    headlineContent = { Text(item.meal.description) },
+                                    leadingContent = { Text("🍴") },
+                                    trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                                )
+                            }
+                            is FeedItem.BMItem -> {
+                                ListItem(
+                                    headlineContent = { Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) },
+                                    leadingContent = { Text("💩") },
+                                    trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                                )
+                            }
+                            is FeedItem.WeightItem -> {
+                                ListItem(
+                                    headlineContent = { Text("Weight: ${item.weightEntry.weight} ${item.weightEntry.unit}", color = MaterialTheme.colorScheme.secondary) },
+                                    leadingContent = { Text("⚖️") },
+                                    trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                                )
+                            }
                         }
                     }
                 }
@@ -394,7 +426,7 @@ fun DataOverviewScreen(viewModel: MealViewModel, onBack: () -> Unit) {
 
 @Composable
 fun BMFrequencyChart(frequency: Double) {
-    val progress = (frequency / 3.0).coerceIn(0.0, 1.0).toFloat() // Scale 0-3 BMs/day
+    val progress = (frequency / 3.0).coerceIn(0.0, 1.0).toFloat()
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Box(modifier = Modifier.fillMaxWidth().height(24.dp)) {
             LinearProgressIndicator(
@@ -409,10 +441,17 @@ fun BMFrequencyChart(frequency: Double) {
                 Box(modifier = Modifier.width(2.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface).align(androidx.compose.ui.Alignment.CenterEnd))
             }
         }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("0", style = MaterialTheme.typography.labelSmall)
+            Text("1 (Goal)", style = MaterialTheme.typography.labelSmall)
+            Text("2", style = MaterialTheme.typography.labelSmall)
+            Text("3+", style = MaterialTheme.typography.labelSmall)
+        }
         Text(
-            text = "%.2f BMs per day (Goal: >1.0)".format(frequency),
+            text = "Current: %.2f BMs/day".format(frequency),
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.align(androidx.compose.ui.Alignment.End)
+            modifier = Modifier.align(androidx.compose.ui.Alignment.End).padding(top = 4.dp),
+            color = if (frequency >= 1.0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
         )
     }
 }
@@ -424,41 +463,46 @@ fun WeightTrendChart(history: List<ch.schmidlins.mealdiary.data.entities.WeightE
     val minWeight = history.minOf { it.weight }
     val range = (maxWeight - minWeight).coerceAtLeast(1.0)
     
-    Canvas(modifier = Modifier.fillMaxWidth().height(120.dp).padding(vertical = 8.dp)) {
-        val width = size.width
-        val height = size.height
-        val stepX = width / (history.size - 1).coerceAtLeast(1)
-        
-        val points = history.mapIndexed { index, entry ->
-            val x = index * stepX
-            val y = height - ((entry.weight - minWeight) / range * height).toFloat()
-            androidx.compose.ui.geometry.Offset(x, y)
+    Column {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("%.1f kg".format(maxWeight), style = MaterialTheme.typography.labelSmall)
+            Text("%.1f kg".format(minWeight), style = MaterialTheme.typography.labelSmall)
         }
-        
-        for (i in 0 until points.size - 1) {
-            drawLine(
-                color = color,
-                start = points[i],
-                end = points[i + 1],
-                strokeWidth = 4f
+        Canvas(modifier = Modifier.fillMaxWidth().height(120.dp).padding(vertical = 8.dp)) {
+            val width = size.width
+            val height = size.height
+            val stepX = width / (history.size - 1).coerceAtLeast(1)
+            
+            val points = history.mapIndexed { index, entry ->
+                val x = index * stepX
+                val y = height - ((entry.weight - minWeight) / range * height).toFloat()
+                androidx.compose.ui.geometry.Offset(x, y)
+            }
+            
+            for (i in 0 until points.size - 1) {
+                drawLine(
+                    color = color,
+                    start = points[i],
+                    end = points[i + 1],
+                    strokeWidth = 4f
+                )
+                drawCircle(color = color, center = points[i], radius = 6f)
+            }
+            drawCircle(color = color, center = points.last(), radius = 6f)
+            
+            val fillPath = androidx.compose.ui.graphics.Path().apply {
+                moveTo(points.first().x, height)
+                points.forEach { lineTo(it.x, it.y) }
+                lineTo(points.last().x, height)
+                close()
+            }
+            drawPath(
+                path = fillPath,
+                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                    colors = listOf(color.copy(alpha = 0.3f), androidx.compose.ui.graphics.Color.Transparent)
+                )
             )
-            drawCircle(color = color, center = points[i], radius = 6f)
         }
-        drawCircle(color = color, center = points.last(), radius = 6f)
-        
-        // Add a soft fill under the line
-        val fillPath = androidx.compose.ui.graphics.Path().apply {
-            moveTo(points.first().x, height)
-            points.forEach { lineTo(it.x, it.y) }
-            lineTo(points.last().x, height)
-            close()
-        }
-        drawPath(
-            path = fillPath,
-            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                colors = listOf(color.copy(alpha = 0.3f), androidx.compose.ui.graphics.Color.Transparent)
-            )
-        )
     }
 }
 

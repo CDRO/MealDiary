@@ -1,7 +1,7 @@
 # MealDiary Master Plan
 
 ## Project Vision
-A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, weight tracking, and personalized reminders.
+A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, weight tracking, personalized reminders, and an in-app widget dashboard.
 
 ## Milestones
 
@@ -26,14 +26,32 @@ A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, wei
 ### Milestone 7: Heuristic Analysis (C++ Native) (Completed)
 - **Objective**: Data-driven insights.
 
-### Milestone 8: Data Export (CSV)
+### Milestone 8: Data Export (CSV) (Completed)
 - **Objective**: Portability and backup of user data.
-- **Tasks**:
-    - Implement unified CSV generation logic.
-    - Integrate Storage Access Framework for file saving.
-    - Add Export UI to Settings.
 
-### Milestone 9: Final Polish
+### Milestone 9: Recurring Meal Suggestions
+- **Objective**: Further reduce the hurdle of logging repetitive meals.
+- **Tasks**:
+    - Identify meals logged at least 5 times.
+    - Implement autocomplete/suggestions in the meal entry field.
+    - Optimize suggestion speed.
+
+### Milestone 10: Extensive BM Logging
+- **Objective**: Capture detailed gastrointestinal health data.
+- **Tasks**:
+    - Implement "Extensive Mode" for BM entries.
+    - Track consistency (Bristol scale), pain levels, time taken, and other factors.
+    - Allow adding details during log or editing afterwards.
+
+### Milestone 11: In-App Widget Dashboard
+- **Objective**: Create a customizable, swipeable overview pane.
+- **Tasks**:
+    - Implement a second pane in the UI accessible via swipe.
+    - Build a framework for in-app widgets (Stats, Recent, Charts).
+    - Allow users to reorder and configure dashboard widgets.
+    - Ensure widgets are functional and interactive.
+
+### Milestone 12: Final Polish
 - **Objective**: Quality assurance and UX refinement.
 - **Tasks**:
     - Haptics, animations.

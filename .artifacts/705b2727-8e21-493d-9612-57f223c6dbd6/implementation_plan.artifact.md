@@ -1,52 +1,46 @@
-# Implementation Plan - Milestone 8: CSV Data Export
+# Implementation Plan - Milestone 9: Recurring Meal Suggestions
 
-This plan outlines the implementation of a data export feature, allowing users to save their diary entries as a CSV file using the Storage Access Framework (SAF).
+This plan focuses on implementing an autocomplete feature for meal descriptions to further reduce the hurdle of logging repetitive food items.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Export Format**: We will provide a single CSV file containing all entries (Meals, Bowel Movements, and Weight) with a "Type" column to distinguish them, or separate files? I am proposing a **single unified CSV** for simplicity, with columns: `Timestamp`, `Type`, `Description/Weight`, `Notes`.
+> **Suggestion Criteria**: Meals will only be suggested if they have been logged **at least 5 times** in the past. This ensures the suggestion list remains relevant and uncluttered.
+> **UX Integration**: Suggestions will appear in a dropdown or horizontally scrollable list above the keyboard while typing in the "What did you eat?" field.
 
 ## Proposed Changes
 
-### 1. Data Layer
+### Data Layer
+
+#### [MODIFY] [MealDao.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/dao/MealDao.kt)
+- Add a query to fetch meal descriptions that appear at least 5 times.
+- `SELECT description FROM meals GROUP BY description HAVING COUNT(*) >= 5`
+
+### View Model
 
 #### [MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)
-- Add a function to generate a CSV string from all existing database entries.
-- Format: `Date,Time,Type,Value,Notes`
+- Expose a `recurringMeals: LiveData<List<String>>` flow.
+- Filter the list based on the current `mealText` input.
 
-### 2. UI Layer
+### UI Layer
 
-#### [MODIFY] [SettingsActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/settings/SettingsActivity.kt)
-- Add an **"Export Data to CSV"** button.
-- Integrate `ActivityResultContracts.CreateDocument` to allow the user to choose a save location.
-- Handle writing the CSV string to the selected URI using a `ContentResolver`.
-
-### 3. CSV Generation Logic
-- **Meals**: `timestamp, MEAL, description, notes`
-- **BMs**: `timestamp, BM, , notes`
-- **Weight**: `timestamp, WEIGHT, weight value, unit`
+#### [MODIFY] [MainActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/MainActivity.kt)
+- Implement an autocomplete dropdown or a suggestion row above the text field.
+- When a suggestion is tapped, the text field is populated instantly.
 
 ## Verification Plan
 
 ### Automated Tests
 - **Unit Tests**:
-    - Verify the CSV string generation logic handles empty lists.
-    - Verify correct escaping of commas in meal descriptions (if any).
+    - Verify the DAO query correctly identifies descriptions with >= 5 entries.
+    - Verify the ViewModel correctly filters suggestions based on input prefix.
 - **Robolectric Tests**:
-    - Verify that clicking the export button triggers the file picker intent.
+    - Verify that suggestions appear when typing a matching prefix.
+    - Verify that tapping a suggestion updates the text field.
 
 ### Manual Verification
 - Deploy to emulator.
-- Log several entries of each type.
-- Go to Settings -> Export Data.
-- Select a location (e.g., Downloads).
-- Open the resulting file on the computer or device and verify the data matches.
-
----
-
-# Master Plan Update
-
-I will also update `MASTER_PLAN.md` to reflect the new milestone sequence:
-- **Milestone 8**: Data Export (CSV)
-- **Milestone 9**: Final Polish
+- Log "Oatmeal" 5 times.
+- Start typing "Oat" in the input field.
+- Verify "Oatmeal" appears as a suggestion.
+- Tap it and verify the text is completed.
