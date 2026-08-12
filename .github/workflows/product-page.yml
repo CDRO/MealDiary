@@ -17,6 +17,26 @@ permissions:
   id-token: write
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      app_changed: ${{ steps.filter.outputs.app }}
+    steps:
+      - name: Detect app code changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            app:
+              - 'app/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle.properties'
+              - 'gradlew'
+              - 'gradlew.bat'
+              - 'gradle/**'
+              - 'gradle/libs.versions.toml'
+
   pages:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
@@ -33,65 +53,90 @@ jobs:
 
           npm install -g markdown-to-html
 
-          cat <<'EOF' > public/index.html
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>MealDiary - Product Page</title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-            <style>
-              nav { margin-bottom: 2rem; border-bottom: 1px solid #ccc; padding-bottom: 1rem; }
-              nav a { margin-right: 1rem; }
-            </style>
-          </head>
-          <body>
-            <nav>
-              <a href="https://cdro.github.io/MealDiary/">Product Page</a>
-              <a href="index.html">Home</a>
-              <a href="contributing.html">Contributing</a>
-              <a href="milestones.html">Milestones</a>
-              <a href="artifacts/index.html">Artifacts</a>
-              <a href="https://github.com/CDRO/MealDiary/releases/latest">Download APK</a>
-            </nav>
-          EOF
+          render_nav() {
+            local base="$1"
+            local home_rel="index.html"
+            local artifacts_rel="artifacts/index.html"
+            local contributing_rel="contributing.html"
+            local milestones_rel="milestones.html"
+
+            case "$base" in
+              "public")
+                home_rel="index.html"
+                artifacts_rel="artifacts/index.html"
+                contributing_rel="contributing.html"
+                milestones_rel="milestones.html"
+                ;;
+              "public/artifacts")
+                home_rel="../index.html"
+                artifacts_rel="index.html"
+                contributing_rel="../contributing.html"
+                milestones_rel="../milestones.html"
+                ;;
+              *)
+                home_rel="../index.html"
+                artifacts_rel="../artifacts/index.html"
+                contributing_rel="../contributing.html"
+                milestones_rel="../milestones.html"
+                ;;
+            esac
+
+            printf '%s\n' \
+              '<nav class="top-nav">' \
+              '<a href="https://cdro.github.io/MealDiary/">Product Page</a>' \
+              "<a href=\"${home_rel}\">Home</a>" \
+              "<a href=\"${artifacts_rel}\">Artifacts</a>" \
+              "<a href=\"${contributing_rel}\">Contributing</a>" \
+              "<a href=\"${milestones_rel}\">Milestones</a>" \
+              '<a href="https://github.com/CDRO/MealDiary/releases/latest">Download APK</a>' \
+              '</nav>'
+          }
+
+          {
+            echo '<!DOCTYPE html>'
+            echo '<html>'
+            echo '<head>'
+            echo '<title>MealDiary - Product Page</title>'
+            echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
+            echo '<style>'
+            echo 'nav { margin-bottom: 2rem; border-bottom: 1px solid #ccc; padding-bottom: 1rem; }'
+            echo 'nav a { margin-right: 1rem; }'
+            echo '</style>'
+            echo '</head>'
+            echo '<body>'
+            render_nav "public"
+            echo '<!-- main content -->'
+          } > public/index.html
           markdown README.md >> public/index.html
-          echo "</body></html>" >> public/index.html
+          echo '</body></html>' >> public/index.html
 
-          cat <<'EOF' > public/contributing.html
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Contributing - MealDiary</title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-          </head>
-          <body>
-            <nav>
-              <a href="https://cdro.github.io/MealDiary/">Product Page</a>
-              <a href="index.html">Home</a>
-              <a href="artifacts/index.html">Artifacts</a>
-              <a href="milestones.html">Milestones</a>
-            </nav>
-          EOF
+          {
+            echo '<!DOCTYPE html>'
+            echo '<html>'
+            echo '<head>'
+            echo '<title>Contributing - MealDiary</title>'
+            echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
+            echo '</head>'
+            echo '<body>'
+            render_nav "public"
+            echo '<!-- main content -->'
+          } > public/contributing.html
           markdown CONTRIBUTING.md >> public/contributing.html
-          echo "</body></html>" >> public/contributing.html
+          echo '</body></html>' >> public/contributing.html
 
-          cat <<'EOF' > public/milestones.html
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Milestones - MealDiary</title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-          </head>
-          <body>
-            <nav>
-              <a href="https://cdro.github.io/MealDiary/">Product Page</a>
-              <a href="index.html">Home</a>
-              <a href="artifacts/index.html">Artifacts</a>
-            </nav>
-            <h1>Project Milestones</h1>
-          EOF
+          {
+            echo '<!DOCTYPE html>'
+            echo '<html>'
+            echo '<head>'
+            echo '<title>Milestones - MealDiary</title>'
+            echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
+            echo '</head>'
+            echo '<body>'
+            render_nav "public"
+            echo '<h1>Project Milestones</h1>'
+          } > public/milestones.html
           markdown docs/artifacts/MASTER_PLAN.md >> public/milestones.html
-          echo "</body></html>" >> public/milestones.html
+          echo '</body></html>' >> public/milestones.html
 
           python - <<'PY'
           import os
@@ -103,7 +148,7 @@ jobs:
 
           docs_root = Path('docs/artifacts')
           public_root = Path('public')
-          artifact_root = public_root / 'artifacts'
+          artifact_root = public_root
           artifact_root.mkdir(parents=True, exist_ok=True)
 
           def slugify(value: str) -> str:
@@ -170,7 +215,7 @@ jobs:
                   f'<title>{folder_title(folder)}</title>'
                   '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
                   '<style>'
-                  'body { margin: 0; font-family: sans-serif; }'
+                  'body { font-family: sans-serif; }'
                   '.top-nav { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #ccc; padding: 1rem 0; }'
                   '.layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 2rem; align-items: start; }'
                   '.toc { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; padding: 1rem; border-left: 1px solid #ddd; }'
@@ -196,7 +241,7 @@ jobs:
               '<title>MealDiary Artifacts</title>'
               '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
               '<style>'
-              'body { margin: 0; font-family: sans-serif; }'
+              'body {} font-family: sans-serif; }'
               '.top-nav { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #ccc; padding: 1rem 0; }'
               '.content { max-width: 1100px; margin: 0 auto; }'
               '</style>'
@@ -227,8 +272,8 @@ jobs:
         uses: actions/deploy-pages@v4
 
   test:
-    needs: pages
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    needs: [changes, pages]
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && needs.changes.outputs.app_changed == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -240,6 +285,16 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
@@ -248,8 +303,8 @@ jobs:
         run: ./gradlew testDebugUnitTest
 
   build-debug-apk:
-    needs: test
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    needs: [changes, test]
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && needs.changes.outputs.app_changed == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -261,6 +316,16 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
