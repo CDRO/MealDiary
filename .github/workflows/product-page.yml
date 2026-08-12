@@ -284,7 +284,7 @@ jobs:
           folder_links = sorted(folder_links, key=lambda item: natural_sort_key(item[0]))
 
           artifact_index = artifact_root / 'index.html'
-          css_href = os.path.relpath(public_root / 'site.css', artifact_root /)
+          css_href = os.path.relpath(public_root / 'site.css', artifact_root)
           artifact_index.write_text(
               '<!DOCTYPE html>'
               '<html><head>'
