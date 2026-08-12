@@ -12,6 +12,10 @@ A high-performance, "zero-hurdle" meal and bowel movement logging application wi
 *   **Modular Dashboard:** Swipeable, customizable in-app widget dashboard.
 *   **Data Portability:** Export your entire history to CSV at any time.
 
+## 📱 Screenshots
+
+*(Dashboard and Feed screenshots coming soon)*
+
 ## 🛠 Tech Stack
 
 *   **UI:** Jetpack Compose (Material 3)
