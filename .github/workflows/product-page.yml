@@ -1,0 +1,100 @@
+name: Generate Product Page
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Generate HTML
+        run: |
+          mkdir -p public
+          
+          # Install markdown-to-html tool (simple one)
+          npm install -g markdown-to-html
+          
+          # Create a basic header/nav
+          cat <<EOF > public/index.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>MealDiary - Product Page</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+            <style>
+              nav { margin-bottom: 2rem; border-bottom: 1px solid #ccc; padding-bottom: 1rem; }
+              nav a { margin-right: 1rem; }
+            </style>
+          </head>
+          <body>
+            <nav>
+              <a href="index.html">Home</a>
+              <a href="contributing.html">Contributing</a>
+              <a href="milestones.html">Milestones</a>
+              <a href="https://github.com/CDRO/MealDiary/releases/latest">Download APK</a>
+            </nav>
+          EOF
+
+          # Append README content
+          markdown README.md >> public/index.html
+          
+          echo "</body></html>" >> public/index.html
+
+          # Generate Contributing page
+          cat <<EOF > public/contributing.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Contributing - MealDiary</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+          </head>
+          <body>
+            <nav><a href="index.html">Back to Home</a></nav>
+          EOF
+          markdown CONTRIBUTING.md >> public/contributing.html
+          echo "</body></html>" >> public/contributing.html
+
+          # Generate Milestones page
+          cat <<EOF > public/milestones.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Milestones - MealDiary</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+          </head>
+          <body>
+            <nav><a href="index.html">Back to Home</a></nav>
+            <h1>Project Milestones</h1>
+          EOF
+          markdown docs/artifacts/MASTER_PLAN.md >> public/milestones.html
+          echo "</body></html>" >> public/milestones.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './public'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
