@@ -45,6 +45,7 @@ jobs:
           </head>
           <body>
             <nav>
+              <a href="https://cdro.github.io/MealDiary/">Product Page</a>
               <a href="index.html">Home</a>
               <a href="contributing.html">Contributing</a>
               <a href="milestones.html">Milestones</a>
@@ -66,7 +67,10 @@ jobs:
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
           </head>
           <body>
-            <nav><a href="index.html">Back to Home</a></nav>
+            <nav>
+              <a href="https://cdro.github.io/MealDiary/">Product Page</a>
+              <a href="index.html">Back to Home</a>
+            </nav>
           EOF
           markdown CONTRIBUTING.md >> public/contributing.html
           echo "</body></html>" >> public/contributing.html
@@ -80,7 +84,10 @@ jobs:
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
           </head>
           <body>
-            <nav><a href="index.html">Back to Home</a></nav>
+            <nav>
+              <a href="https://cdro.github.io/MealDiary/">Product Page</a>
+              <a href="index.html">Back to Home</a>
+            </nav>
             <h1>Project Milestones</h1>
           EOF
           markdown docs/artifacts/MASTER_PLAN.md >> public/milestones.html
