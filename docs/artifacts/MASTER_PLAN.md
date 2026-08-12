@@ -38,12 +38,8 @@ A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, wei
 ### Milestone 11: In-App Widget Dashboard (Completed)
 - **Objective**: Create a customizable, swipeable overview pane.
 
-### Milestone 12: Project Governance & Infrastructure
+### Milestone 12: Project Governance & Infrastructure (Completed)
 - **Objective**: Establish documentation and automated oversight.
-- **Tasks**:
-    - Add `README.md` and `CONTRIBUTING.md`.
-    - Implement automated AI governance for external PRs.
-    - Set up GitHub Action for a generated Product Page.
 
 ### Milestone 13: Final Polish
 - **Objective**: Quality assurance and UX refinement.
