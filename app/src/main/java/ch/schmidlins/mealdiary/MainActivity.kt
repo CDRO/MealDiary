@@ -61,7 +61,26 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val viewModel: MealViewModel = viewModel(factory = viewModelFactory)
             
-            NavHost(navController = navController, startDestination = "main") {
+            NavHost(
+                navController = navController, 
+                startDestination = "main",
+                enterTransition = { 
+                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) + 
+                    androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(300), initialOffsetX = { it }) 
+                },
+                exitTransition = { 
+                    androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300)) + 
+                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(300), targetOffsetX = { -it }) 
+                },
+                popEnterTransition = { 
+                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) + 
+                    androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(300), initialOffsetX = { -it }) 
+                },
+                popExitTransition = { 
+                    androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300)) + 
+                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(300), targetOffsetX = { it }) 
+                }
+            ) {
                 composable("main") {
                     MealDiaryApp(viewModel, onNavigateToOverview = { navController.navigate("overview") })
                 }
