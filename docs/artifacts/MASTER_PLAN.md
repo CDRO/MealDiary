@@ -41,8 +41,5 @@ A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, wei
 ### Milestone 12: Project Governance & Infrastructure (Completed)
 - **Objective**: Establish documentation and automated oversight.
 
-### Milestone 13: Final Polish
+### Milestone 13: Final Polish (Completed)
 - **Objective**: Quality assurance and UX refinement.
-- **Tasks**:
-    - Haptics, animations.
-    - Full test suite execution and verification.
