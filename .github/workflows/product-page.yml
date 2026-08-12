@@ -249,7 +249,7 @@ jobs:
 
           folder_links = []
           for folder, files in sorted(grouped.items(), key=lambda item: natural_sort_key(item[0].as_posix())):
-              page_dir = artifact_root / folder.as_posix().replace('artifacts/', '')
+              page_dir = artifact_root / folder
               page_dir.mkdir(parents=True, exist_ok=True)
 
               if folder == Path('.'):
