@@ -117,17 +117,24 @@ jobs:
                   return 'Artifacts'
               return path.name.replace('_', ' ').replace('-', ' ').title()
 
+          def natural_sort_key(value: str):
+              parts = re.split(r'(\d+)', value)
+              return [int(part) if part.isdigit() else part.lower() for part in parts]
+
           def art_nav(base_dir: Path) -> str:
-              root_href = os.path.relpath(public_root / 'index.html', base_dir)
+              home_href = os.path.relpath(public_root / 'index.html', base_dir)
               artifact_href = os.path.relpath(artifact_root / 'index.html', base_dir)
+              contributing_href = os.path.relpath(public_root / 'contributing.html', base_dir)
+              milestones_href = os.path.relpath(public_root / 'milestones.html', base_dir)
               project_href = 'https://cdro.github.io/MealDiary/'
               return (
                   '<nav class="top-nav">'
                   f'<a href="{project_href}">Product Page</a>'
-                  f'<a href="{root_href}">Home</a>'
+                  f'<a href="{home_href}">Home</a>'
                   f'<a href="{artifact_href}">Artifacts</a>'
-                  '<a href="../../contributing.html">Contributing</a>'
-                  '<a href="../../milestones.html">Milestones</a>'
+                  f'<a href="{contributing_href}">Contributing</a>'
+                  f'<a href="{milestones_href}">Milestones</a>'
+                  '<a href="https://github.com/CDRO/MealDiary/releases/latest">Download APK</a>'
                   '</nav>'
               )
 
@@ -135,18 +142,18 @@ jobs:
               return markdown.markdown(path.read_text(encoding='utf-8'), extensions=['extra', 'sane_lists'])
 
           grouped = defaultdict(list)
-          for md in sorted(docs_root.rglob('*.md')):
+          for md in sorted(docs_root.rglob('*.md'), key=lambda item: natural_sort_key(item.as_posix())):
               grouped[md.relative_to(docs_root).parent].append(md)
 
           folder_links = []
-          for folder, files in sorted(grouped.items(), key=lambda item: item[0].as_posix()):
+          for folder, files in sorted(grouped.items(), key=lambda item: natural_sort_key(item[0].as_posix())):
               page_dir = artifact_root / folder
               page_dir.mkdir(parents=True, exist_ok=True)
 
               if folder == Path('.'):
                   continue
 
-              sorted_files = sorted(files, key=lambda item: item.name)
+              sorted_files = sorted(files, key=lambda item: natural_sort_key(item.name))
               toc_items = []
               sections = []
               for file in sorted_files:
@@ -178,6 +185,8 @@ jobs:
               )
               page_target.write_text(page_html, encoding='utf-8')
               folder_links.append((folder.as_posix(), page_target.relative_to(public_root).as_posix(), folder_title(folder)))
+
+          folder_links = sorted(folder_links, key=lambda item: natural_sort_key(item[0]))
 
           artifact_index = artifact_root / 'index.html'
           artifact_index.write_text(
