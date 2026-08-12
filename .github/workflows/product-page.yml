@@ -27,6 +27,7 @@ jobs:
       - name: Generate HTML
         run: |
           set -e
+          python -m pip install markdown
           mkdir -p public
           mkdir -p public/artifacts
 
