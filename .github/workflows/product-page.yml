@@ -279,7 +279,7 @@ jobs:
                   + '<aside class="toc"><h3>Contents</h3><ul>' + ''.join(toc_items) + '</ul></aside></div></body></html>'
               )
               page_target.write_text(page_html, encoding='utf-8')
-              folder_links.append((folder.as_posix(), page_target.relative_to(artifact_root).as_posix(), folder_title(folder)))
+              folder_links.append((folder.as_posix(), page_target.relative_to(public_root).as_posix(), folder_title(folder)))
 
           folder_links = sorted(folder_links, key=lambda item: natural_sort_key(item[0]))
 
