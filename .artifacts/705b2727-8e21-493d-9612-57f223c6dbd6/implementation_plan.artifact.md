@@ -1,52 +1,47 @@
-# Implementation Plan - Milestone 8: CSV Data Export
+# Implementation Plan - Milestone 12: Project Governance & Infrastructure
 
-This plan outlines the implementation of a data export feature, allowing users to save their diary entries as a CSV file using the Storage Access Framework (SAF).
+This plan outlines the addition of project documentation, contribution guidelines, automated product page generation, and strict governance rules for AI-led PR reviews.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Export Format**: We will provide a single CSV file containing all entries (Meals, Bowel Movements, and Weight) with a "Type" column to distinguish them, or separate files? I am proposing a **single unified CSV** for simplicity, with columns: `Timestamp`, `Type`, `Description/Weight`, `Notes`.
+> **Hostile Review Logic**: The AI agent will now proactively check for PRs from external contributors. It will strictly reject any changes to core configuration files (`.geminirules`, `.ai_state.json`, `CONTRIBUTING.md`) or milestone artifacts. External contributions must be "high value" and accompanied by documentation in `docs/artifacts/contributions/cXX`.
+
+> [!NOTE]
+> **Product Page**: A GitHub Action will be implemented to generate a static "Product Page" accessible via GitHub Pages. It will include a rendered README, a menu for browsing contributions/milestones, and a link to the latest APK.
 
 ## Proposed Changes
 
-### 1. Data Layer
+### Project Documentation
+#### [NEW] [README.md](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/README.md)
+- Project vision: "Zero-hurdle" logging.
+- Tech stack overview.
+- Links to milestones and product page.
 
-#### [MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)
-- Add a function to generate a CSV string from all existing database entries.
-- Format: `Date,Time,Type,Value,Notes`
+#### [NEW] [CONTRIBUTING.md](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/CONTRIBUTING.md)
+- Process for opening PRs.
+- Requirement for `docs/artifacts/contributions/cXX/implementation_plan.md` and `tasks.md`.
+- Warning about the automated AI "hostile review" for external code.
 
-### 2. UI Layer
+### Governance & Security
+#### [MODIFY] [.geminirules](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/.geminirules)
+- Add "Governance & External Contributions" section.
+- Instruction to check `gh pr list` for authors other than `tizian.schmidlin@gmail.com`.
+- Hard rejection rules for core files.
+- Command to mention `@CDRO` upon validation success.
 
-#### [MODIFY] [SettingsActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/settings/SettingsActivity.kt)
-- Add an **"Export Data to CSV"** button.
-- Integrate `ActivityResultContracts.CreateDocument` to allow the user to choose a save location.
-- Handle writing the CSV string to the selected URI using a `ContentResolver`.
-
-### 3. CSV Generation Logic
-- **Meals**: `timestamp, MEAL, description, notes`
-- **BMs**: `timestamp, BM, , notes`
-- **Weight**: `timestamp, WEIGHT, weight value, unit`
+### Automation (CI/CD)
+#### [NEW] [.github/workflows/product-page.yml](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/.github/workflows/product-page.yml)
+- Trigger on PR merges to `main`.
+- Generate HTML from Markdown artifacts.
+- Deploy to the `gh-pages` branch.
 
 ## Verification Plan
 
 ### Automated Tests
-- **Unit Tests**:
-    - Verify the CSV string generation logic handles empty lists.
-    - Verify correct escaping of commas in meal descriptions (if any).
-- **Robolectric Tests**:
-    - Verify that clicking the export button triggers the file picker intent.
+- Trigger the GitHub Action by pushing to a branch and merging.
+- Verify the action completes successfully and publishes to GitHub Pages.
 
 ### Manual Verification
-- Deploy to emulator.
-- Log several entries of each type.
-- Go to Settings -> Export Data.
-- Select a location (e.g., Downloads).
-- Open the resulting file on the computer or device and verify the data matches.
-
----
-
-# Master Plan Update
-
-I will also update `MASTER_PLAN.md` to reflect the new milestone sequence:
-- **Milestone 8**: Data Export (CSV)
-- **Milestone 9**: Final Polish
+- Attempt a mock review of a simulated "external" PR to verify `.geminirules` rejection logic.
+- Browse the generated product page to ensure all links (README, CONTRIBUTING, Milestones) work correctly.

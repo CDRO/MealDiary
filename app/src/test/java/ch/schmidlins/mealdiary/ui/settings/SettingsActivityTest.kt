@@ -29,6 +29,7 @@ class SettingsActivityTest {
         every { prefsRepo.bmPromptIntervalHours } returns flowOf(24)
         every { prefsRepo.isReminderEnabled } returns flowOf(true)
         every { prefsRepo.isWeightTrackingEnabled } returns flowOf(false)
+        every { prefsRepo.enabledWidgets } returns flowOf(setOf("insights", "bm_freq"))
     }
 
     @Test
@@ -37,6 +38,6 @@ class SettingsActivityTest {
             SettingsScreen(prefsRepo, viewModel)
         }
         
-        composeTestRule.onNodeWithText("Export Data to CSV").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Export Data to CSV").performScrollTo().assertIsDisplayed()
     }
 }

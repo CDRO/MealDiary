@@ -16,6 +16,16 @@ class UserPreferencesRepository(private val context: Context) {
         val REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
         val IS_WEIGHT_TRACKING_ENABLED = booleanPreferencesKey("is_weight_tracking_enabled")
         val WEIGHT_SUGGESTION_DISMISSED = booleanPreferencesKey("weight_suggestion_dismissed")
+        val WIDGET_ORDER = stringPreferencesKey("widget_order")
+        val ENABLED_WIDGETS = stringSetPreferencesKey("enabled_widgets")
+    }
+
+    val widgetOrder: Flow<List<String>> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.WIDGET_ORDER]?.split(",") ?: listOf("insights", "bm_freq", "weight_trend", "top_foods")
+    }
+
+    val enabledWidgets: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.ENABLED_WIDGETS] ?: setOf("insights", "bm_freq", "weight_trend", "top_foods")
     }
 
     val bmPromptIntervalHours: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -55,6 +65,18 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun dismissWeightSuggestion() {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.WEIGHT_SUGGESTION_DISMISSED] = true
+        }
+    }
+
+    suspend fun updateWidgetOrder(order: List<String>) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.WIDGET_ORDER] = order.joinToString(",")
+        }
+    }
+
+    suspend fun updateEnabledWidgets(enabled: Set<String>) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ENABLED_WIDGETS] = enabled
         }
     }
 }

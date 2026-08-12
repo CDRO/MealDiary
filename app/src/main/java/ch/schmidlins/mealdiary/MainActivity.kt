@@ -5,12 +5,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
@@ -71,8 +78,9 @@ class MainActivity : ComponentActivity() {
 fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val haptic = LocalHapticFeedback.current
-    var mealText by remember { mutableStateOf("") }
+    val mealText by viewModel.mealInputText.collectAsState()
     var weightText by remember { mutableStateOf("") }
+    val suggestions by viewModel.mealSuggestions.observeAsState(emptyList())
     val feedItems by viewModel.unifiedFeed.observeAsState(emptyList())
     val shouldAskBM by viewModel.shouldAskAboutBM.observeAsState(false)
     val shouldShowWeightSuggestion by viewModel.shouldShowWeightSuggestion.observeAsState(false)
@@ -82,10 +90,31 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
     val patternResult = remember { analysisEngine.getPatternResult() }
     val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
+    var selectedBMForDetail by remember { mutableStateOf<ch.schmidlins.mealdiary.data.entities.BowelMovement?>(null) }
+
+    if (selectedBMForDetail != null) {
+        ch.schmidlins.mealdiary.ui.BMDetailDialog(
+            bm = selectedBMForDetail!!,
+            onDismiss = { selectedBMForDetail = null },
+            onSave = { 
+                viewModel.updateBM(it)
+                selectedBMForDetail = null
+            },
+            onDelete = {
+                viewModel.deleteBM(it)
+                selectedBMForDetail = null
+            }
+        )
+    }
+
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { 2 })
+
     Scaffold(
         topBar = { 
             TopAppBar(
-                title = { Text("MealDiary - $patternResult") },
+                title = { 
+                    Text(if (pagerState.currentPage == 0) "MealDiary - $patternResult" else "Dashboard") 
+                },
                 actions = {
                     IconButton(onClick = onNavigateToOverview) {
                         Icon(Icons.Default.Info, contentDescription = "Overview")
@@ -100,165 +129,295 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
             ) 
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-            timeSinceBM?.let {
-                Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.outline)
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            
-            androidx.compose.animation.AnimatedVisibility(visible = shouldAskBM) {
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Have you had a bowel movement in the last 24h?", style = MaterialTheme.typography.bodyLarge)
-                        Button(
-                            onClick = { 
-                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                viewModel.addBowelMovement() 
-                            },
-                            modifier = Modifier.padding(top = 8.dp)
+        androidx.compose.foundation.pager.HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.padding(padding)
+        ) { page ->
+            if (page == 0) {
+                Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                    timeSinceBM?.let {
+                        Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.outline)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    
+                    androidx.compose.animation.AnimatedVisibility(visible = shouldAskBM) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                         ) {
-                            Text("Yes, Log now")
-                        }
-                    }
-                }
-            }
-
-            androidx.compose.animation.AnimatedVisibility(visible = shouldShowWeightSuggestion) {
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("You've been using MealDiary for a week! Would you like to track your weight as well?", style = MaterialTheme.typography.bodyLarge)
-                        Row(modifier = Modifier.padding(top = 8.dp)) {
-                            Button(onClick = { 
-                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                viewModel.enableWeightTracking() 
-                            }) {
-                                Text("Yes, Enable")
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            TextButton(onClick = { viewModel.dismissWeightSuggestion() }) {
-                                Text("Not now")
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("Have you had a bowel movement in the last 24h?", style = MaterialTheme.typography.bodyLarge)
+                                Button(
+                                    onClick = { 
+                                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                        viewModel.addBowelMovement() 
+                                    },
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    Text("Yes, Log now")
+                                }
                             }
                         }
                     }
-                }
-            }
 
-            androidx.compose.animation.AnimatedVisibility(visible = isWeightTrackingEnabled) {
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = weightText,
-                            onValueChange = { weightText = it },
-                            label = { Text("Weight (kg)") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                            singleLine = true
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(onClick = {
-                            weightText.toDoubleOrNull()?.let {
+                    androidx.compose.animation.AnimatedVisibility(visible = shouldShowWeightSuggestion) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("You've been using MealDiary for a week! Would you like to track your weight as well?", style = MaterialTheme.typography.bodyLarge)
+                                Row(modifier = Modifier.padding(top = 8.dp)) {
+                                    Button(onClick = { 
+                                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                        viewModel.enableWeightTracking() 
+                                    }) {
+                                        Text("Yes, Enable")
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    TextButton(onClick = { viewModel.dismissWeightSuggestion() }) {
+                                        Text("Not now")
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    androidx.compose.animation.AnimatedVisibility(visible = isWeightTrackingEnabled) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                OutlinedTextField(
+                                    value = weightText,
+                                    onValueChange = { weightText = it },
+                                    label = { Text("Weight (kg)") },
+                                    modifier = Modifier.weight(1f),
+                                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                                    singleLine = true
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(onClick = {
+                                    weightText.toDoubleOrNull()?.let {
+                                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                        viewModel.addWeightEntry(it)
+                                        weightText = ""
+                                    }
+                                }) {
+                                    Text("Log")
+                                }
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = mealText,
+                        onValueChange = { viewModel.updateMealInputText(it) },
+                        label = { Text("What did you eat?") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    if (suggestions.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            suggestions.forEach { suggestion ->
+                                SuggestionChip(
+                                    onClick = { viewModel.updateMealInputText(suggestion) },
+                                    label = { Text(suggestion) }
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row {
+                        Button(onClick = { 
+                            if (mealText.isNotBlank()) {
                                 haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                viewModel.addWeightEntry(it)
-                                weightText = ""
+                                viewModel.addMeal(mealText)
+                                viewModel.updateMealInputText("")
                             }
                         }) {
-                            Text("Log")
+                            Text("Log Meal")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(onClick = { 
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                            viewModel.addBowelMovement() 
+                        }) {
+                            Text("Log BM")
+                        }
+                        IconButton(onClick = {
+                            val newBM = ch.schmidlins.mealdiary.data.entities.BowelMovement(timestamp = System.currentTimeMillis())
+                            selectedBMForDetail = newBM
+                        }) {
+                            Icon(Icons.Default.Add, contentDescription = "Log BM with details")
                         }
                     }
-                }
-            }
-
-            OutlinedTextField(
-                value = mealText,
-                onValueChange = { mealText = it },
-                label = { Text("What did you eat?") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row {
-                Button(onClick = { 
-                    if (mealText.isNotBlank()) {
-                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                        viewModel.addMeal(mealText)
-                        mealText = ""
-                    }
-                }) {
-                    Text("Log Meal")
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { 
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                    viewModel.addBowelMovement() 
-                }) {
-                    Text("Log BM")
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn {
-                items(feedItems, key = { "${it.javaClass.simpleName}-${it.id}" }) { item ->
-                    val timeStr = dateFormat.format(Date(item.timestamp))
-                    
-                    val dismissState = rememberSwipeToDismissBoxState(
-                        confirmValueChange = {
-                            if (it == SwipeToDismissBoxValue.EndToStart) {
-                                when (item) {
-                                    is FeedItem.MealItem -> viewModel.deleteMeal(item.meal)
-                                    is FeedItem.BMItem -> viewModel.deleteBM(item.bm)
-                                    is FeedItem.WeightItem -> viewModel.deleteWeight(item.weightEntry)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LazyColumn {
+                        items(feedItems, key = { "${it.javaClass.simpleName}-${it.id}" }) { item ->
+                            val timeStr = dateFormat.format(Date(item.timestamp))
+                            
+                            val dismissState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = {
+                                    if (it == SwipeToDismissBoxValue.EndToStart) {
+                                        when (item) {
+                                            is FeedItem.MealItem -> viewModel.deleteMeal(item.meal)
+                                            is FeedItem.BMItem -> viewModel.deleteBM(item.bm)
+                                            is FeedItem.WeightItem -> viewModel.deleteWeight(item.weightEntry)
+                                        }
+                                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                        true
+                                    } else false
                                 }
-                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                true
-                            } else false
-                        }
-                    )
+                            )
 
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        backgroundContent = {
-                            val color = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) MaterialTheme.colorScheme.error else androidx.compose.ui.graphics.Color.Transparent
-                            Box(modifier = Modifier.fillMaxSize().background(color).padding(horizontal = 20.dp), contentAlignment = androidx.compose.ui.Alignment.CenterEnd) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = androidx.compose.ui.graphics.Color.White)
-                            }
-                        },
-                        enableDismissFromStartToEnd = false,
-                        modifier = Modifier.animateItem()
-                    ) {
-                        when (item) {
-                            is FeedItem.MealItem -> {
-                                ListItem(
-                                    headlineContent = { Text(item.meal.description) },
-                                    leadingContent = { Text("🍴") },
-                                    trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
-                                )
-                            }
-                            is FeedItem.BMItem -> {
-                                ListItem(
-                                    headlineContent = { Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) },
-                                    leadingContent = { Text("💩") },
-                                    trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
-                                )
-                            }
-                            is FeedItem.WeightItem -> {
-                                ListItem(
-                                    headlineContent = { Text("Weight: ${item.weightEntry.weight} ${item.weightEntry.unit}", color = MaterialTheme.colorScheme.secondary) },
-                                    leadingContent = { Text("⚖️") },
-                                    trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
-                                )
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                backgroundContent = {
+                                    val color = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) MaterialTheme.colorScheme.error else androidx.compose.ui.graphics.Color.Transparent
+                                    Box(modifier = Modifier.fillMaxSize().background(color).padding(horizontal = 20.dp), contentAlignment = androidx.compose.ui.Alignment.CenterEnd) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = androidx.compose.ui.graphics.Color.White)
+                                    }
+                                },
+                                enableDismissFromStartToEnd = false,
+                                modifier = Modifier.animateItem()
+                            ) {
+                                when (item) {
+                                    is FeedItem.MealItem -> {
+                                        ListItem(
+                                            headlineContent = { Text(item.meal.description) },
+                                            leadingContent = { Text("🍴") },
+                                            trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                                        )
+                                    }
+                                    is FeedItem.BMItem -> {
+                                        ListItem(
+                                            headlineContent = { 
+                                                Text("Bowel Movement", color = MaterialTheme.colorScheme.primary) 
+                                            },
+                                            supportingContent = {
+                                                if (item.bm.consistency != null) {
+                                                    val emoji = when (item.bm.consistency) {
+                                                        1 -> "🌰"
+                                                        2 -> "🥖"
+                                                        3 -> "🌽"
+                                                        4 -> "🐍"
+                                                        5 -> "☁️"
+                                                        6 -> "🥞"
+                                                        7 -> "🌊"
+                                                        else -> ""
+                                                    }
+                                                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                                        Text("$emoji B${item.bm.consistency}", style = MaterialTheme.typography.labelSmall)
+                                                        if ((item.bm.painLevel ?: 0) > 0) {
+                                                            Spacer(modifier = Modifier.width(8.dp))
+                                                            Text("🔥 ${item.bm.painLevel}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                                                        }
+                                                        if ((item.bm.durationMinutes ?: 0) > 0) {
+                                                            Spacer(modifier = Modifier.width(8.dp))
+                                                            Text("⏱️ ${item.bm.durationMinutes}m", style = MaterialTheme.typography.labelSmall)
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            leadingContent = { Text("💩") },
+                                            trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) },
+                                            modifier = Modifier.clickable { selectedBMForDetail = item.bm }
+                                        )
+                                    }
+                                    is FeedItem.WeightItem -> {
+                                        ListItem(
+                                            headlineContent = { Text("Weight: ${item.weightEntry.weight} ${item.weightEntry.unit}", color = MaterialTheme.colorScheme.secondary) },
+                                            leadingContent = { Text("⚖️") },
+                                            trailingContent = { Text(timeStr, style = MaterialTheme.typography.labelSmall) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
+                }
+            } else {
+                DashboardPane(viewModel)
+            }
+        }
+    }
+}
+
+@Composable
+fun DashboardPane(viewModel: MealViewModel) {
+    val haptic = LocalHapticFeedback.current
+    val persistedOrder by viewModel.widgetOrder.observeAsState(listOf("insights", "bm_freq", "weight_trend", "top_foods"))
+    val enabledWidgets by viewModel.enabledWidgets.observeAsState(setOf("insights", "bm_freq", "weight_trend", "top_foods"))
+    
+    val allWidgets = listOf(
+        ch.schmidlins.mealdiary.ui.dashboard.AppWidget.Insights,
+        ch.schmidlins.mealdiary.ui.dashboard.AppWidget.BMFrequency,
+        ch.schmidlins.mealdiary.ui.dashboard.AppWidget.WeightTrend,
+        ch.schmidlins.mealdiary.ui.dashboard.AppWidget.TopFoods
+    )
+
+    val widgets = persistedOrder.filter { it in enabledWidgets }.mapNotNull { id ->
+        allWidgets.find { it.id == id }
+    }
+
+    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        item {
+            Text("Your Dashboard", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (widgets.isEmpty()) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Text("No widgets enabled. Go to Settings to add some!", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
+                }
+            }
+        }
+
+        items(widgets, key = { it.id }) { widget ->
+            val index = widgets.indexOf(widget)
+            Card(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Text(widget.title, style = MaterialTheme.typography.titleMedium)
+                        Row {
+                            if (index > 0) {
+                                IconButton(onClick = {
+                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                    val newOrder = persistedOrder.toMutableList()
+                                    Collections.swap(newOrder, index, index - 1)
+                                    viewModel.updateWidgetOrder(newOrder)
+                                }) {
+                                    Icon(Icons.Default.ArrowUpward, contentDescription = "Move Up")
+                                }
+                            }
+                            if (index < widgets.size - 1) {
+                                IconButton(onClick = {
+                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                                    val newOrder = persistedOrder.toMutableList()
+                                    Collections.swap(newOrder, index, index + 1)
+                                    viewModel.updateWidgetOrder(newOrder)
+                                }) {
+                                    Icon(Icons.Default.ArrowDownward, contentDescription = "Move Down")
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    widget.Content(viewModel)
                 }
             }
         }
@@ -504,7 +663,22 @@ fun TimelineComponent(items: List<FeedItem>) {
                 items.forEach { item ->
                     val offset = ((item.timestamp - today).toFloat() / dayMillis).coerceIn(0f, 1f)
                     val color = if (item is FeedItem.MealItem) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-                    val icon = if (item is FeedItem.MealItem) "🍴" else "💩"
+                    val icon = when (item) {
+                        is FeedItem.MealItem -> "🍴"
+                        is FeedItem.BMItem -> {
+                            when (item.bm.consistency) {
+                                1 -> "🌰"
+                                2 -> "🥖"
+                                3 -> "🌽"
+                                4 -> "🐍"
+                                5 -> "☁️"
+                                6 -> "🥞"
+                                7 -> "🌊"
+                                else -> "💩"
+                            }
+                        }
+                        is FeedItem.WeightItem -> "⚖️"
+                    }
                     
                     Box(modifier = Modifier.fillMaxWidth().align(androidx.compose.ui.Alignment.Center)) {
                         Column(

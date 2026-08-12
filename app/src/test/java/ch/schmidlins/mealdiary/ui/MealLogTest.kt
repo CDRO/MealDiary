@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import ch.schmidlins.mealdiary.DataOverviewScreen
 import ch.schmidlins.mealdiary.MealDiaryApp
+import ch.schmidlins.mealdiary.data.entities.BowelMovement
 import ch.schmidlins.mealdiary.data.repository.BMRepository
 import ch.schmidlins.mealdiary.data.repository.MealRepository
 import ch.schmidlins.mealdiary.data.repository.UserPreferencesRepository
@@ -164,5 +165,72 @@ class MealLogTest {
 
         // Insights should be empty by default with empty repo
         composeTestRule.onNodeWithText("Smart Insights").assertDoesNotExist()
+    }
+
+    @Test
+    fun testBMDetailDialogSaves() {
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
+        val bm = BowelMovement(id = 1, timestamp = 1000)
+        
+        var savedBM: BowelMovement? = null
+
+        composeTestRule.setContent {
+            BMDetailDialog(
+                bm = bm,
+                onDismiss = {},
+                onSave = { savedBM = it }
+            )
+        }
+
+        // Verify elements exist
+        composeTestRule.onNodeWithText("Bowel Movement Details").assertIsDisplayed()
+        
+        // Tap Save
+        composeTestRule.onNodeWithText("Save").performClick()
+
+        // Verify savedBM was updated (consistency 4 is default in dialog)
+        assert(savedBM?.consistency == 4)
+    }
+
+    @Test
+    fun testAddDetailsButtonOpensDialog() {
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
+        
+        composeTestRule.setContent {
+            MealDiaryApp(viewModel, onNavigateToOverview = {})
+        }
+
+        // Tap Add icon button (Log BM with details)
+        composeTestRule.onNodeWithContentDescription("Log BM with details").performClick()
+        
+        // Verify dialog is shown
+        composeTestRule.onNodeWithText("Bowel Movement Details").assertIsDisplayed()
+    }
+
+    @Test
+    fun testPagerNavigationToDashboard() {
+        val viewModel = MealViewModel(mealRepo, bmRepo, weightRepo, prefsRepo)
+
+        composeTestRule.setContent {
+            MealDiaryApp(viewModel, onNavigateToOverview = {})
+        }
+
+        // Initially on Feed
+        composeTestRule.onNodeWithText("What did you eat?").assertIsDisplayed()
+
+        // Swipe left to go to Dashboard (page 1)
+        composeTestRule.onRoot().performTouchInput {
+            swipeLeft()
+        }
+
+        // Verify Dashboard is shown
+        composeTestRule.onNodeWithText("Your Dashboard").assertIsDisplayed()
+        
+        // Swipe right to go back to Feed
+        composeTestRule.onRoot().performTouchInput {
+            swipeRight()
+        }
+        
+        composeTestRule.onNodeWithText("What did you eat?").assertIsDisplayed()
     }
 }

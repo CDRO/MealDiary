@@ -58,10 +58,27 @@ class MealViewModel(
     private val analysisEngine: AnalysisEngine = AnalysisEngine()
 ) : ViewModel() {
 
+    private val _mealInputText = MutableStateFlow("")
+    val mealInputText: StateFlow<String> = _mealInputText
+
+    fun updateMealInputText(text: String) {
+        _mealInputText.value = text
+    }
+
+    val mealSuggestions: LiveData<List<String>> = combine(
+        mealRepository.recurringMealDescriptions,
+        _mealInputText
+    ) { recurring, input ->
+        if (input.isBlank()) emptyList<String>()
+        else recurring.filter { it.contains(input, ignoreCase = true) && it != input }.take(5)
+    }.asLiveData()
+
     val meals: LiveData<List<Meal>> = mealRepository.allMeals.asLiveData()
     val bms: LiveData<List<BowelMovement>> = bmRepository.allBMs.asLiveData()
 
     val isWeightTrackingEnabled: LiveData<Boolean> = userPreferencesRepository.isWeightTrackingEnabled.asLiveData()
+    val widgetOrder: LiveData<List<String>> = userPreferencesRepository.widgetOrder.asLiveData()
+    val enabledWidgets: LiveData<Set<String>> = userPreferencesRepository.enabledWidgets.asLiveData()
 
     val shouldShowWeightSuggestion: LiveData<Boolean> = combine(
         userPreferencesRepository.isWeightTrackingEnabled,
@@ -231,6 +248,12 @@ class MealViewModel(
         }
     }
 
+    fun updateBM(bm: BowelMovement) {
+        viewModelScope.launch {
+            bmRepository.insertBM(bm) // Room @Insert(onConflict = REPLACE) handles update
+        }
+    }
+
     fun deleteWeight(entry: WeightEntry) {
         viewModelScope.launch {
             weightRepository.deleteWeight(entry)
@@ -259,6 +282,18 @@ class MealViewModel(
         }
     }
 
+    fun updateWidgetOrder(order: List<String>) {
+        viewModelScope.launch {
+            userPreferencesRepository.updateWidgetOrder(order)
+        }
+    }
+
+    fun updateEnabledWidgets(enabled: Set<String>) {
+        viewModelScope.launch {
+            userPreferencesRepository.updateEnabledWidgets(enabled)
+        }
+    }
+
     suspend fun getCSVData(): String {
         val meals = mealRepository.allMeals.first()
         val bms = bmRepository.allBMs.first()
@@ -277,7 +312,8 @@ class MealViewModel(
         }
 
         bms.forEach { bm ->
-            sb.append("${bm.timestamp},BM,,${escape(bm.notes)}\n")
+            val extInfo = if (bm.consistency != null) "Bristol: ${bm.consistency}; Pain: ${bm.painLevel}; Duration: ${bm.durationMinutes}m" else ""
+            sb.append("${bm.timestamp},BM,${escape(extInfo)},${escape(bm.notes)}\n")
         }
 
         weights.forEach { weight ->

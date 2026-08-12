@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -47,6 +49,7 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
     val bmInterval by prefsRepo.bmPromptIntervalHours.collectAsState(initial = 24)
     val reminderEnabled by prefsRepo.isReminderEnabled.collectAsState(initial = true)
     val weightEnabled by prefsRepo.isWeightTrackingEnabled.collectAsState(initial = false)
+    val enabledWidgets by prefsRepo.enabledWidgets.collectAsState(initial = setOf("insights", "bm_freq", "weight_trend", "top_foods"))
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv"),
@@ -69,7 +72,7 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
     Scaffold(
         topBar = { TopAppBar(title = { Text("Settings") }) }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(16.dp)) {
+        Column(modifier = Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState())) {
             Text("Bowel Movement Prompt Interval", style = MaterialTheme.typography.titleMedium)
             Slider(
                 value = bmInterval.toFloat(),
@@ -97,6 +100,32 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
                     checked = weightEnabled,
                     onCheckedChange = { scope.launch { prefsRepo.updateWeightTrackingEnabled(it) } }
                 )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text("Dashboard Widgets", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            val allWidgetIds = listOf(
+                "insights" to "Smart Insights",
+                "bm_freq" to "BM Frequency",
+                "weight_trend" to "Weight Trend",
+                "top_foods" to "Top Foods"
+            )
+
+            allWidgetIds.forEach { (id, label) ->
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text(label)
+                    Switch(
+                        checked = id in enabledWidgets,
+                        onCheckedChange = { isChecked ->
+                            val newSet = enabledWidgets.toMutableSet()
+                            if (isChecked) newSet.add(id) else newSet.remove(id)
+                            scope.launch { prefsRepo.updateEnabledWidgets(newSet) }
+                        }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))

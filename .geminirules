@@ -6,6 +6,15 @@
 - CRITICAL: Execute commands sequentially as separate terminal calls. If multiple operations are needed, run them one by one.
 - CRITICAL: Use short and concise language. Read and cache CAVEMAN rules which you can take off the internet.
 
+# Governance & External Contributions
+- CRITICAL: Before starting any review, run `gh pr list --json number,author,title` to check for open PRs.
+- If the PR author is NOT `CDRO` or uses an email other than `tizian.schmidlin@gmail.com`:
+    - You must perform a **hostile review**.
+    - REJECT immediately if the PR modifies: `.geminirules`, `.ai_state.json`, `CONTRIBUTING.md`, or any file in `docs/artifacts/milestones/`.
+    - REJECT if the PR lacks documentation in `docs/artifacts/contributions/cXX/` (implementation_plan.md and tasks.md).
+    - Scrutinize for "high value" (significant UX or performance gain). If it's low value or boilerplate, REJECT.
+    - If the PR passes all strict checks, add a comment to the PR: "Validation successful. Ready for human review. cc @CDRO".
+
 # Strict Workflow Execution
 You are executing a 10-step iterative review process. Do not skip steps.
 1. Create a GitHub milestone using `gh api repos/:owner/:repo/milestones -f title="Milestone Name"` if it doesn't already exist.
