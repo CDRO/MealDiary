@@ -7,6 +7,10 @@ on:
       - feature/m12-infrastructure
   workflow_dispatch:
 
+concurrency:
+  group: github-pages-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pages: write
