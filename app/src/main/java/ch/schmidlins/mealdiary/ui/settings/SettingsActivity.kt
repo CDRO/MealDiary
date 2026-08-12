@@ -45,6 +45,7 @@ class SettingsActivity : ComponentActivity() {
 @Composable
 fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewModel) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val bmInterval by prefsRepo.bmPromptIntervalHours.collectAsState(initial = 24)
     val reminderEnabled by prefsRepo.isReminderEnabled.collectAsState(initial = true)
@@ -76,7 +77,10 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
             Text("Bowel Movement Prompt Interval", style = MaterialTheme.typography.titleMedium)
             Slider(
                 value = bmInterval.toFloat(),
-                onValueChange = { scope.launch { prefsRepo.updateBMPromptInterval(it.toInt()) } },
+                onValueChange = { 
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                    scope.launch { prefsRepo.updateBMPromptInterval(it.toInt()) } 
+                },
                 valueRange = 12f..48f,
                 steps = 3
             )
@@ -88,7 +92,10 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
                 Text("Enable Meal Reminders")
                 Switch(
                     checked = reminderEnabled,
-                    onCheckedChange = { scope.launch { prefsRepo.updateReminderEnabled(it) } }
+                    onCheckedChange = { 
+                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                        scope.launch { prefsRepo.updateReminderEnabled(it) } 
+                    }
                 )
             }
 
@@ -98,7 +105,10 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
                 Text("Enable Weight Tracking")
                 Switch(
                     checked = weightEnabled,
-                    onCheckedChange = { scope.launch { prefsRepo.updateWeightTrackingEnabled(it) } }
+                    onCheckedChange = { 
+                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                        scope.launch { prefsRepo.updateWeightTrackingEnabled(it) } 
+                    }
                 )
             }
 
@@ -120,6 +130,7 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
                     Switch(
                         checked = id in enabledWidgets,
                         onCheckedChange = { isChecked ->
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                             val newSet = enabledWidgets.toMutableSet()
                             if (isChecked) newSet.add(id) else newSet.remove(id)
                             scope.launch { prefsRepo.updateEnabledWidgets(newSet) }
@@ -133,7 +144,10 @@ fun SettingsScreen(prefsRepo: UserPreferencesRepository, viewModel: MealViewMode
             Text("Data Management", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
             Button(
-                onClick = { exportLauncher.launch("meal_diary_export.csv") },
+                onClick = { 
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                    exportLauncher.launch("meal_diary_export.csv") 
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Export Data to CSV")
