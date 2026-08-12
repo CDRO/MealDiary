@@ -252,13 +252,14 @@ jobs:
               sorted_files = sorted(files, key=lambda item: natural_sort_key(item.name))
               toc_items = []
               sections = []
+              page_target = page_dir / 'index.html'
+              relative_folder = folder.as_posix()
               for file in sorted_files:
                   label = file.stem.replace('_', ' ').replace('-', ' ').title()
                   anchor = slugify(label)
-                  toc_items.append(f'<li><a href="#{anchor}">{label}</a></li>')
+                  toc_items.append(f'<li><a href="{relative_folder}#{anchor}">{label}</a></li>')
                   sections.append(f'<section id="{anchor}"><h2>{label}</h2>{render_markdown(file)}</section>')
 
-              page_target = page_dir / 'index.html'
               page_html = (
                   '<!DOCTYPE html>'
                   '<html><head>'
