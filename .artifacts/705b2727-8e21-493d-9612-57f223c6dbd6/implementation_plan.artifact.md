@@ -1,46 +1,47 @@
-# Implementation Plan - Milestone 9: Recurring Meal Suggestions
+# Implementation Plan - Milestone 12: Project Governance & Infrastructure
 
-This plan focuses on implementing an autocomplete feature for meal descriptions to further reduce the hurdle of logging repetitive food items.
+This plan outlines the addition of project documentation, contribution guidelines, automated product page generation, and strict governance rules for AI-led PR reviews.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Suggestion Criteria**: Meals will only be suggested if they have been logged **at least 5 times** in the past. This ensures the suggestion list remains relevant and uncluttered.
-> **UX Integration**: Suggestions will appear in a dropdown or horizontally scrollable list above the keyboard while typing in the "What did you eat?" field.
+> **Hostile Review Logic**: The AI agent will now proactively check for PRs from external contributors. It will strictly reject any changes to core configuration files (`.geminirules`, `.ai_state.json`, `CONTRIBUTING.md`) or milestone artifacts. External contributions must be "high value" and accompanied by documentation in `docs/artifacts/contributions/cXX`.
+
+> [!NOTE]
+> **Product Page**: A GitHub Action will be implemented to generate a static "Product Page" accessible via GitHub Pages. It will include a rendered README, a menu for browsing contributions/milestones, and a link to the latest APK.
 
 ## Proposed Changes
 
-### Data Layer
+### Project Documentation
+#### [NEW] [README.md](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/README.md)
+- Project vision: "Zero-hurdle" logging.
+- Tech stack overview.
+- Links to milestones and product page.
 
-#### [MODIFY] [MealDao.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/data/dao/MealDao.kt)
-- Add a query to fetch meal descriptions that appear at least 5 times.
-- `SELECT description FROM meals GROUP BY description HAVING COUNT(*) >= 5`
+#### [NEW] [CONTRIBUTING.md](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/CONTRIBUTING.md)
+- Process for opening PRs.
+- Requirement for `docs/artifacts/contributions/cXX/implementation_plan.md` and `tasks.md`.
+- Warning about the automated AI "hostile review" for external code.
 
-### View Model
+### Governance & Security
+#### [MODIFY] [.geminirules](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/.geminirules)
+- Add "Governance & External Contributions" section.
+- Instruction to check `gh pr list` for authors other than `tizian.schmidlin@gmail.com`.
+- Hard rejection rules for core files.
+- Command to mention `@CDRO` upon validation success.
 
-#### [MODIFY] [MealViewModel.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/ui/MealViewModel.kt)
-- Expose a `recurringMeals: LiveData<List<String>>` flow.
-- Filter the list based on the current `mealText` input.
-
-### UI Layer
-
-#### [MODIFY] [MainActivity.kt](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/app/src/main/java/ch/schmidlins/mealdiary/MainActivity.kt)
-- Implement an autocomplete dropdown or a suggestion row above the text field.
-- When a suggestion is tapped, the text field is populated instantly.
+### Automation (CI/CD)
+#### [NEW] [.github/workflows/product-page.yml](file:///C:/Users/tizia/AndroidStudioProjects/MealDiary/.github/workflows/product-page.yml)
+- Trigger on PR merges to `main`.
+- Generate HTML from Markdown artifacts.
+- Deploy to the `gh-pages` branch.
 
 ## Verification Plan
 
 ### Automated Tests
-- **Unit Tests**:
-    - Verify the DAO query correctly identifies descriptions with >= 5 entries.
-    - Verify the ViewModel correctly filters suggestions based on input prefix.
-- **Robolectric Tests**:
-    - Verify that suggestions appear when typing a matching prefix.
-    - Verify that tapping a suggestion updates the text field.
+- Trigger the GitHub Action by pushing to a branch and merging.
+- Verify the action completes successfully and publishes to GitHub Pages.
 
 ### Manual Verification
-- Deploy to emulator.
-- Log "Oatmeal" 5 times.
-- Start typing "Oat" in the input field.
-- Verify "Oatmeal" appears as a suggestion.
-- Tap it and verify the text is completed.
+- Attempt a mock review of a simulated "external" PR to verify `.geminirules` rejection logic.
+- Browse the generated product page to ensure all links (README, CONTRIBUTING, Milestones) work correctly.

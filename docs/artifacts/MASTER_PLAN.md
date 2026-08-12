@@ -35,15 +35,13 @@ A "zero-hurdle" meal and bowel movement diary with smart heuristic analysis, wei
 ### Milestone 10: Extensive BM Logging (Completed)
 - **Objective**: Capture detailed gastrointestinal health data.
 
-### Milestone 11: In-App Widget Dashboard
+### Milestone 11: In-App Widget Dashboard (Completed)
 - **Objective**: Create a customizable, swipeable overview pane.
-- **Tasks**:
-    - Implement a second pane in the UI accessible via swipe.
-    - Build a framework for in-app widgets (Stats, Recent, Charts).
-    - Allow users to reorder and configure dashboard widgets.
-    - Ensure widgets are functional and interactive.
 
-### Milestone 12: Final Polish
+### Milestone 12: Project Governance & Infrastructure (Completed)
+- **Objective**: Establish documentation and automated oversight.
+
+### Milestone 13: Final Polish
 - **Objective**: Quality assurance and UX refinement.
 - **Tasks**:
     - Haptics, animations.
