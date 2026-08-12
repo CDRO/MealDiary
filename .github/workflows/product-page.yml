@@ -94,65 +94,109 @@ jobs:
 
           python - <<'PY'
           import os
-          import subprocess
+          import re
           from pathlib import Path
+          from collections import defaultdict
+
+          import markdown
 
           docs_root = Path('docs/artifacts')
           public_root = Path('public')
           artifact_root = public_root / 'artifacts'
           artifact_root.mkdir(parents=True, exist_ok=True)
 
-          generated = []
-          for md in sorted(docs_root.rglob('*.md')):
-              rel = md.relative_to(docs_root)
-              target = artifact_root / rel.with_suffix('.html')
-              target.parent.mkdir(parents=True, exist_ok=True)
+          def slugify(value: str) -> str:
+              value = value.lower().strip()
+              value = re.sub(r'[^a-z0-9\s-]', '', value)
+              value = re.sub(r'[\s_]+', '-', value)
+              return value.strip('-') or 'section'
 
-              content = subprocess.check_output(['markdown', str(md)], text=True)
-              root_href = os.path.relpath(public_root / 'index.html', target.parent)
-              artifacts_href = os.path.relpath(artifact_root / 'index.html', target.parent)
-              nav = (
-                  '<nav>'
-                  '<a href="https://cdro.github.io/MealDiary/">Product Page</a>'
+          def folder_title(path: Path) -> str:
+              if path == Path('.'):
+                  return 'Artifacts'
+              return path.name.replace('_', ' ').replace('-', ' ').title()
+
+          def art_nav(base_dir: Path) -> str:
+              root_href = os.path.relpath(public_root / 'index.html', base_dir)
+              artifact_href = os.path.relpath(artifact_root / 'index.html', base_dir)
+              project_href = 'https://cdro.github.io/MealDiary/'
+              return (
+                  '<nav class="top-nav">'
+                  f'<a href="{project_href}">Product Page</a>'
                   f'<a href="{root_href}">Home</a>'
-                  f'<a href="{artifacts_href}">Artifacts</a>'
+                  f'<a href="{artifact_href}">Artifacts</a>'
                   '<a href="../../contributing.html">Contributing</a>'
                   '<a href="../../milestones.html">Milestones</a>'
                   '</nav>'
               )
-              target.write_text(
-                  '<!DOCTYPE html>'
-                  '<html><head>'
-                  '<meta charset="utf-8">'
-                  '<title>' + rel.as_posix() + '</title>'
-                  '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
-                  '</head><body>' + nav + content + '</body></html>',
-                  encoding='utf-8',
-              )
-              generated.append((rel.as_posix(), target.relative_to(public_root).as_posix()))
 
-          index_file = artifact_root / 'index.html'
-          with index_file.open('w', encoding='utf-8') as fh:
-              fh.write(
+          def render_markdown(path: Path) -> str:
+              return markdown.markdown(path.read_text(encoding='utf-8'), extensions=['extra', 'sane_lists'])
+
+          grouped = defaultdict(list)
+          for md in sorted(docs_root.rglob('*.md')):
+              grouped[md.relative_to(docs_root).parent].append(md)
+
+          folder_links = []
+          for folder, files in sorted(grouped.items(), key=lambda item: item[0].as_posix()):
+              page_dir = artifact_root / folder
+              page_dir.mkdir(parents=True, exist_ok=True)
+
+              if folder == Path('.'):
+                  continue
+
+              sorted_files = sorted(files, key=lambda item: item.name)
+              toc_items = []
+              sections = []
+              for file in sorted_files:
+                  label = file.stem.replace('_', ' ').replace('-', ' ').title()
+                  anchor = slugify(label)
+                  toc_items.append(f'<li><a href="#{anchor}">{label}</a></li>')
+                  sections.append(f'<section id="{anchor}"><h2>{label}</h2>{render_markdown(file)}</section>')
+
+              page_target = page_dir / 'index.html'
+              page_html = (
                   '<!DOCTYPE html>'
                   '<html><head>'
                   '<meta charset="utf-8">'
-                  '<title>MealDiary Artifacts</title>'
+                  f'<title>{folder_title(folder)}</title>'
                   '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
+                  '<style>'
+                  'body { margin: 0; font-family: sans-serif; }'
+                  '.top-nav { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #ccc; padding: 1rem 0; }'
+                  '.layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 2rem; align-items: start; }'
+                  '.toc { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; padding: 1rem; border-left: 1px solid #ddd; }'
+                  '.toc ul { list-style: none; padding-left: 0; margin: 0; }'
+                  '.toc li { margin: 0.35rem 0; }'
+                  '@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .toc { position: static; border-left: none; border-top: 1px solid #ddd; padding-top: 1rem; } }'
+                  '</style>'
                   '</head><body>'
-                  '<nav>'
-                  '<a href="https://cdro.github.io/MealDiary/">Product Page</a>'
-                  '<a href="../index.html">Home</a>'
-                  '<a href="../contributing.html">Contributing</a>'
-                  '<a href="../milestones.html">Milestones</a>'
-                  '</nav>'
-                  '<h1>Artifacts</h1>'
-                  '<ul>'
+                  + art_nav(page_dir)
+                  + '<div class="layout"><main><h1>' + folder_title(folder) + '</h1>' + ''.join(sections) + '</main>'
+                  + '<aside class="toc"><h3>Contents</h3><ul>' + ''.join(toc_items) + '</ul></aside></div></body></html>'
               )
-              for rel, target_path in generated:
-                  label = rel.replace('/', ' / ')
-                  fh.write(f'<li><a href="{target_path}">{label}</a></li>')
-              fh.write('</ul></body></html>')
+              page_target.write_text(page_html, encoding='utf-8')
+              folder_links.append((folder.as_posix(), page_target.relative_to(public_root).as_posix(), folder_title(folder)))
+
+          artifact_index = artifact_root / 'index.html'
+          artifact_index.write_text(
+              '<!DOCTYPE html>'
+              '<html><head>'
+              '<meta charset="utf-8">'
+              '<title>MealDiary Artifacts</title>'
+              '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
+              '<style>'
+              'body { margin: 0; font-family: sans-serif; }'
+              '.top-nav { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #ccc; padding: 1rem 0; }'
+              '.content { max-width: 1100px; margin: 0 auto; }'
+              '</style>'
+              '</head><body>'
+              + art_nav(artifact_root)
+              + '<div class="content"><h1>Artifacts</h1><ul>'
+              + ''.join(f'<li><a href="{page_rel}">{label}</a></li>' for _, page_rel, label in folder_links)
+              + '</ul></div></body></html>',
+              encoding='utf-8',
+          )
           PY
 
       - name: Upload artifact
