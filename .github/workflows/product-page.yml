@@ -253,7 +253,7 @@ jobs:
               toc_items = []
               sections = []
               page_target = page_dir / 'index.html'
-              relative_folder = page_dir / folder
+              relative_folder = 'artifacts' / folder
               for file in sorted_files:
                   label = file.stem.replace('_', ' ').replace('-', ' ').title()
                   anchor = slugify(label)
