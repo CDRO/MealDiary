@@ -148,7 +148,7 @@ jobs:
 
           docs_root = Path('docs/artifacts')
           public_root = Path('public')
-          artifact_root = public_root
+          artifact_root = public_root / 'artifacts'
           artifact_root.mkdir(parents=True, exist_ok=True)
 
           def slugify(value: str) -> str:
