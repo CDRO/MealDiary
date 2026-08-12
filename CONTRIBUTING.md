@@ -11,6 +11,8 @@ We welcome contributions that add high value to the project. However, please be 
     *   `CONTRIBUTING.md`
     *   `docs/artifacts/milestones/**/*`
 3.  **High Value Only:** We only accept features or fixes that significantly improve the "zero-hurdle" UX or app performance.
+    *   *Example High Value:* A new native C++ analysis heuristic.
+    *   *Example Low Value:* Correcting a typo in a private comment.
 4.  **Documentation Requirement:** Every PR **must** include its own documentation folder:
     *   `docs/artifacts/contributions/cXX/implementation_plan.md`
     *   `docs/artifacts/contributions/cXX/tasks.md`
