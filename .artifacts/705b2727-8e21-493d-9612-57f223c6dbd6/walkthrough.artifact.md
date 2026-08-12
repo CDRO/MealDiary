@@ -1,39 +1,34 @@
-# Walkthrough - Milestone 10: Extensive BM Logging
+# Walkthrough - Milestone 12: Project Governance & Infrastructure
 
-Milestone 10 introduced "Extensive Mode" for bowel movements, allowing users to track clinical health data like consistency (Bristol Scale), pain levels, and duration.
+Milestone 12 established the formal structure of the repository, including clear onboarding for contributors, automated static page generation, and strict security rules for AI-led PR reviews.
 
 ## Changes Made
 
-### 1. Enhanced Data Model & Migration
-- Updated `BowelMovement` entity to include `consistency`, `painLevel`, and `durationMinutes`.
-- Implemented **Room Database Migration (v1 -> v2)** to safely add the new columns without data loss.
+### 1. Repository Onboarding
+- Created `README.md` featuring the "zero-hurdle" project vision, tech stack, and links to the product page.
+- Created `CONTRIBUTING.md` which defines the high-bar standards for external code and the required documentation structure.
 
-### 2. Extensive Logging UI
-- Created `BMDetailDialog` featuring:
-    - **Bristol Stool Scale**: Numeric selection with descriptive text (e.g., "Smooth sausage (Ideal)") and emojis (🌰, 🥖, 🐍, etc.).
-    - **Pain Level**: 0-10 scale with descriptive labels (None, Mild, Moderate, Severe, Unbearable).
-    - **Duration**: Tracking time taken (1-60 mins).
-    - **Notes**: Support for per-entry clinical notes.
-- Added an **"Add Details" icon** next to the quick "Log BM" button.
-- Made existing BM feed items clickable to open the detail editor.
+### 2. AI-Led Governance
+- Updated `.geminirules` with a new **Governance & External Contributions** section.
+- The AI agent now proactively checks for PRs from external authors.
+- Implemented a **"Hostile Review"** process that strictly rejects changes to core configuration files and ensures every contribution is accompanied by proper artifacts.
+- Automated validation success messages to alert human maintainers via `@CDRO` mentions.
 
-### 3. Visual Feedback
-- Updated feed items to show rich info icons: e.g., "🐍 B4  🔥 3  ⏱️ 5m".
-- Integrated Bristol emojis into the **Timeline Component** for a quick visual health overview.
-- Added **haptic feedback** to the "Save" and "Delete" actions within the detail dialog.
+### 3. Automated Product Page
+- Implemented a GitHub Action `.github/workflows/product-page.yml`.
+- Automatically generates a static HTML site from project Markdown files (README, CONTRIBUTING, Milestones).
+- Deploys the site to GitHub Pages on every merge to `main`.
+- Includes a dedicated "Download APK" link for users.
 
-### 4. Quality Assurance
-- Added unit tests in `MealViewModelTest` for the update logic.
-- Added Robolectric tests in `MealLogTest` to verify that the detail dialog opens and saves correctly.
-- Verified that all 29 tests pass on the JVM.
+### 4. Structure & Compliance
+- Set up the `docs/artifacts/contributions/` directory to house future external documentation.
+- Verified that all core milestones are documented and versioned correctly.
 
 ## How to Verify
-1.  Launch the app.
-2.  Tap the **+** icon next to the "Log BM" button.
-3.  Adjust the Bristol scale and pain level sliders.
-4.  Tap **Save**.
-5.  Observe the new entry in the feed with the descriptive emoji and stats.
-6.  Tap any BM in the history to edit its details.
+1.  Check the repository root for `README.md` and `CONTRIBUTING.md`.
+2.  Review `.geminirules` to confirm the new governance logic is active.
+3.  Monitor the "Actions" tab on GitHub to see the "Generate Product Page" workflow in progress.
+4.  Visit the [GitHub Pages URL](https://CDRO.github.io/MealDiary) to see the rendered dashboard.
 
 ## Next Steps
-In Milestone 11, we will implement the **In-App Widget Dashboard**, allowing for a swipeable, customizable overview pane.
+In the final milestone (**Milestone 13: Final Polish**), we will refine the UX animations, ensure haptic feedback is consistent across all logging flows, and perform a comprehensive test suite execution.

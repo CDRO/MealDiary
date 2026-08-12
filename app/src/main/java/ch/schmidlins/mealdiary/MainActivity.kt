@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -60,7 +61,26 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val viewModel: MealViewModel = viewModel(factory = viewModelFactory)
             
-            NavHost(navController = navController, startDestination = "main") {
+            NavHost(
+                navController = navController, 
+                startDestination = "main",
+                enterTransition = { 
+                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) + 
+                    androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(300), initialOffsetX = { it }) 
+                },
+                exitTransition = { 
+                    androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300)) + 
+                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(300), targetOffsetX = { -it }) 
+                },
+                popEnterTransition = { 
+                    androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)) + 
+                    androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(300), initialOffsetX = { -it }) 
+                },
+                popExitTransition = { 
+                    androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300)) + 
+                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(300), targetOffsetX = { it }) 
+                }
+            ) {
                 composable("main") {
                     MealDiaryApp(viewModel, onNavigateToOverview = { navController.navigate("overview") })
                 }
@@ -353,6 +373,7 @@ fun MealDiaryApp(viewModel: MealViewModel, onNavigateToOverview: () -> Unit) {
 
 @Composable
 fun DashboardPane(viewModel: MealViewModel) {
+    val haptic = LocalHapticFeedback.current
     val persistedOrder by viewModel.widgetOrder.observeAsState(listOf("insights", "bm_freq", "weight_trend", "top_foods"))
     val enabledWidgets by viewModel.enabledWidgets.observeAsState(setOf("insights", "bm_freq", "weight_trend", "top_foods"))
     
@@ -394,6 +415,7 @@ fun DashboardPane(viewModel: MealViewModel) {
                         Row {
                             if (index > 0) {
                                 IconButton(onClick = {
+                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                                     val newOrder = persistedOrder.toMutableList()
                                     Collections.swap(newOrder, index, index - 1)
                                     viewModel.updateWidgetOrder(newOrder)
@@ -403,6 +425,7 @@ fun DashboardPane(viewModel: MealViewModel) {
                             }
                             if (index < widgets.size - 1) {
                                 IconButton(onClick = {
+                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                                     val newOrder = persistedOrder.toMutableList()
                                     Collections.swap(newOrder, index, index + 1)
                                     viewModel.updateWidgetOrder(newOrder)
