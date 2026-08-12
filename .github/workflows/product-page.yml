@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -21,13 +21,14 @@ jobs:
 
       - name: Generate HTML
         run: |
+          set -e
           mkdir -p public
-          
+          mkdir -p public/artifacts
+
           # Install markdown-to-html tool (simple one)
           npm install -g markdown-to-html
-          
-          # Create a basic header/nav
-          cat <<EOF > public/index.html
+
+          cat <<'EOF' > public/index.html
           <!DOCTYPE html>
           <html>
           <head>
@@ -44,17 +45,14 @@ jobs:
               <a href="index.html">Home</a>
               <a href="contributing.html">Contributing</a>
               <a href="milestones.html">Milestones</a>
+              <a href="artifacts/index.html">Artifacts</a>
               <a href="https://github.com/CDRO/MealDiary/releases/latest">Download APK</a>
             </nav>
           EOF
-
-          # Append README content
           markdown README.md >> public/index.html
-          
           echo "</body></html>" >> public/index.html
 
-          # Generate Contributing page
-          cat <<EOF > public/contributing.html
+          cat <<'EOF' > public/contributing.html
           <!DOCTYPE html>
           <html>
           <head>
@@ -64,14 +62,15 @@ jobs:
           <body>
             <nav>
               <a href="https://cdro.github.io/MealDiary/">Product Page</a>
-              <a href="index.html">Back to Home</a>
+              <a href="index.html">Home</a>
+              <a href="artifacts/index.html">Artifacts</a>
+              <a href="milestones.html">Milestones</a>
             </nav>
           EOF
           markdown CONTRIBUTING.md >> public/contributing.html
           echo "</body></html>" >> public/contributing.html
 
-          # Generate Milestones page
-          cat <<EOF > public/milestones.html
+          cat <<'EOF' > public/milestones.html
           <!DOCTYPE html>
           <html>
           <head>
@@ -81,12 +80,76 @@ jobs:
           <body>
             <nav>
               <a href="https://cdro.github.io/MealDiary/">Product Page</a>
-              <a href="index.html">Back to Home</a>
+              <a href="index.html">Home</a>
+              <a href="artifacts/index.html">Artifacts</a>
             </nav>
             <h1>Project Milestones</h1>
           EOF
           markdown docs/artifacts/MASTER_PLAN.md >> public/milestones.html
           echo "</body></html>" >> public/milestones.html
+
+          python - <<'PY'
+          import os
+          import subprocess
+          from pathlib import Path
+
+          docs_root = Path('docs/artifacts')
+          public_root = Path('public')
+          artifact_root = public_root / 'artifacts'
+          artifact_root.mkdir(parents=True, exist_ok=True)
+
+          generated = []
+          for md in sorted(docs_root.rglob('*.md')):
+              rel = md.relative_to(docs_root)
+              target = artifact_root / rel.with_suffix('.html')
+              target.parent.mkdir(parents=True, exist_ok=True)
+
+              content = subprocess.check_output(['markdown', str(md)], text=True)
+              root_href = os.path.relpath(public_root / 'index.html', target.parent)
+              artifacts_href = os.path.relpath(artifact_root / 'index.html', target.parent)
+              nav = (
+                  '<nav>'
+                  '<a href="https://cdro.github.io/MealDiary/">Product Page</a>'
+                  f'<a href="{root_href}">Home</a>'
+                  f'<a href="{artifacts_href}">Artifacts</a>'
+                  '<a href="../../contributing.html">Contributing</a>'
+                  '<a href="../../milestones.html">Milestones</a>'
+                  '</nav>'
+              )
+              target.write_text(
+                  '<!DOCTYPE html>'
+                  '<html><head>'
+                  '<meta charset="utf-8">'
+                  '<title>' + rel.as_posix() + '</title>'
+                  '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
+                  '</head><body>' + nav + content + '</body></html>',
+                  encoding='utf-8',
+              )
+              generated.append((rel.as_posix(), target.relative_to(public_root).as_posix()))
+
+          index_file = artifact_root / 'index.html'
+          with index_file.open('w', encoding='utf-8') as fh:
+              fh.write(
+                  '<!DOCTYPE html>'
+                  '<html><head>'
+                  '<meta charset="utf-8">'
+                  '<title>MealDiary Artifacts</title>'
+                  '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">'
+                  '</head><body>'
+                  '<nav>'
+                  '<a href="https://cdro.github.io/MealDiary/">Product Page</a>'
+                  '<a href="../index.html">Home</a>'
+                  '<a href="../contributing.html">Contributing</a>'
+                  '<a href="../milestones.html">Milestones</a>'
+                  '</nav>'
+                  '<h1>Artifacts</h1>'
+                  '<ul>'
+              )
+              for rel, target_path in generated:
+                  label = rel.replace('/', ' / ')
+                  fh.write(f'<li><a href="{target_path}">{label}</a></li>')
+              fh.write('</ul></body></html>')
+          PY
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -103,3 +166,16 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  release:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="0.$(date -u +'%Y%m%d.%H%M')"
+          gh release create "$VERSION" --generate-notes --latest --target "${{ github.sha }}"
