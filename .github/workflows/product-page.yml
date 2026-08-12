@@ -1,6 +1,9 @@
 name: Generate Product Page and Release APK
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     types:
       - closed
@@ -44,7 +47,7 @@ jobs:
               - 'gradle/libs.versions.toml'
 
   pages:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -302,7 +305,7 @@ jobs:
 
   deploy:
     needs: pages
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -314,7 +317,7 @@ jobs:
 
   test:
     needs: [changes, pages]
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && needs.changes.outputs.app_changed == 'true') }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)) && needs.changes.outputs.app_changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -345,7 +348,7 @@ jobs:
 
   build-debug-apk:
     needs: [changes, test]
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && needs.changes.outputs.app_changed == 'true') }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)) && needs.changes.outputs.app_changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -389,7 +392,7 @@ jobs:
 
   release:
     needs: build-debug-apk
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     permissions:
       contents: write
