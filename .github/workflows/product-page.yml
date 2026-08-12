@@ -205,7 +205,7 @@ jobs:
 
           docs_root = Path('docs/artifacts')
           public_root = Path('public')
-          artifact_root = public_root
+          artifact_root = public_root / 'artifacts'
           artifact_root.mkdir(parents=True, exist_ok=True)
 
           def slugify(value: str) -> str:
@@ -249,7 +249,7 @@ jobs:
 
           folder_links = []
           for folder, files in sorted(grouped.items(), key=lambda item: natural_sort_key(item[0].as_posix())):
-              page_dir = artifact_root / folder
+              page_dir = artifact_root / folder.as_posix().replace('artifacts/', '')
               page_dir.mkdir(parents=True, exist_ok=True)
 
               if folder == Path('.'):
@@ -283,8 +283,8 @@ jobs:
 
           folder_links = sorted(folder_links, key=lambda item: natural_sort_key(item[0]))
 
-          artifact_index = artifact_root / 'artifacts/index.html'
-          css_href = os.path.relpath(public_root / 'site.css', artifact_root)
+          artifact_index = artifact_root / 'index.html'
+          css_href = os.path.relpath(public_root / 'site.css', artifact_root /)
           artifact_index.write_text(
               '<!DOCTYPE html>'
               '<html><head>'
