@@ -232,6 +232,9 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
@@ -249,6 +252,9 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
       - name: Build debug APK
         run: ./gradlew assembleDebug
