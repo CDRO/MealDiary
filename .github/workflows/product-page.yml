@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/m12-infrastructure
   workflow_dispatch:
 
 permissions:
