@@ -1,18 +1,15 @@
-# Task: Milestone 8 & 9 Execution
+# Milestone 12: Project Governance & Infrastructure Tasks
 
-- [x] Milestone 8: Data Export (CSV)
-    - [x] GitHub Infrastructure (Milestone, Issue, PR)
-    - [x] Implement CSV string generation logic in `MealViewModel`
-    - [x] Add "Export Data" button to `SettingsActivity`
-    - [x] Integrate `ActivityResultContracts.CreateDocument` for file saving
-    - [x] Write unit tests for CSV formatting
-    - [x] Final 10-iteration review loop
-- [/] Milestone 9: Final Polish
-    - [ ] GitHub Infrastructure
-    - [ ] Implement haptic feedback on log actions (if not done)
-    - [ ] Refine animations (transitions between screens)
-    - [ ] Run full regression test suite (Unit & Robolectric)
-    - [ ] Final deployment and manual UX verification
-- [ ] Finalization
-    - [/] Merge PRs
-    - [ ] Close all Issues & Milestones
+- [ ] Complete Milestone 11 (Merge PR #24)
+- [ ] Initialize Milestone 12 Infrastructure
+    - [ ] Create `README.md`
+    - [ ] Create `CONTRIBUTING.md`
+    - [ ] Adapt `.geminirules` for hostile review logic
+    - [ ] Set up `docs/artifacts/contributions/` directory structure
+- [ ] Implement Product Page Automation
+    - [ ] Create `.github/workflows/product-page.yml`
+    - [ ] Test the workflow with a sample branch merge
+- [ ] Verification
+    - [ ] Verify GitHub Pages deployment
+    - [ ] Finalize Milestone 12
+- [ ] Proceed to Final Polish (Milestone 13)
